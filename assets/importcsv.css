@@ -1,0 +1,11 @@
+select.small { width: 300px; }
+
+fieldset h2 { width: 95%; }
+fieldset.left { width: 50%; float: left; }
+fieldset.right { width: 50%; float: right; }
+
+table.import { border-collapse: collapse; cursor: pointer; margin-bottom: 1em; }
+table.import th, table.import td { text-align: left; border-bottom: 1px solid #ccc; padding: 3px 40px 3px 0; }
+table.import td { padding: 3px; }
+
+option.dont-use { color: #800; }
