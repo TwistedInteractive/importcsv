@@ -8,8 +8,8 @@ Class extension_importcsv extends Extension
 	{
 		return array(
 			'name' => 'Import/export CSV',
-			'version' => '0.1',
-			'release-date' => '2010-10-19',
+			'version' => '0.1.1',
+			'release-date' => '2010-12-16',
 			'author' => array(
 				'name' => 'Giel Berkers',
 				'website' => 'http://www.gielberkers.com',
@@ -19,9 +19,6 @@ Class extension_importcsv extends Extension
 	}
 	
 	public function fetchNavigation() {
-		// echo $this->_Parent->Author->isDeveloper() ? true : false;
-		// print_r(get_class_methods($this));
-		// $this->updated();
 		$author = new Author();
 		$author->loadAuthorFromUsername($_SESSION['sym-']['username']);		
 		

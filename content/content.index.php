@@ -134,9 +134,11 @@
 				}
 				
 				$fieldset->appendChild($table);
+				$fieldset->appendChild(new XMLElement('p', __('To import fields of the type <em>\'upload field\'</em>, make sure the filename used in your CSV is the same as the file you wish to import. Also, the file you wish to import should already be placed manually in the correct folder (which is the folder you picked as destination folder for the field).')));
 				$fieldset->appendChild(new XMLElement('p', __('When a field is marked as \'unique\' special rules will apply if an entry with one ore more unique values already exists.')));
 				$uniqueOptions = array();
 				$uniqueOptions[] = array('default', false, 'Add new entry anyway (default)');
+				// $uniqueOptions[] = array('merge', false, 'Replace existing values with new values (merge)');
 				$uniqueOptions[] = array('ignore', false, 'Do nothing (ignore)');
 				$uniqueOptions[] = array('overwrite', false, 'Replace existing entry with new one (overwrite)');
 				$label = new XMLElement('label', 'With unique fields:');
@@ -145,6 +147,7 @@
 				$fieldset->appendChild(new XMLElement('input', ' Ignore first line', array('type'=>'checkbox', 'name'=>'ignore', 'checked'=>'checked')));
 				$fieldset->appendChild(new XMLElement('input', null, array('type'=>'hidden', 'name'=>'section', 'value'=>$sectionID)));
 				$fieldset->appendChild(new XMLElement('p', __('<br />Please double-check everything. Clicking on \'import\' will start the import process. There is no undo.')));
+				$fieldset->appendChild(new XMLElement('p', __('<p><em>The use of this software is at your own risk. This software is licenced under the <a href="http://en.wikipedia.org/wiki/MIT_License" target="_blank">MIT Licence</a>.</em></p>')));
 				$fieldset->appendChild(Widget::Input('import-step-3', __('Import'), 'submit'));
 				
 				$this->Form->appendChild($fieldset);
@@ -189,12 +192,44 @@
 						{
 							// This value needs to be stored
 							$field = $fm->fetch($associatedFieldID);
-							$data = $field->processRawFieldData($value, $field->__OK__);
-							$entry->setData($associatedFieldID, $data);
+							// Check if the field is of the type 'upload':
+							if($field->get('type') == 'upload')
+							{
+								$destination = $field->get('destination');
+								// Check if the file exists:
+								if(file_exists(DOCROOT.$destination.'/'.$value))
+								{
+									// File exists, create the link:
+									$filename = str_replace('/workspace/', '/', $destination).'/'.str_replace($destination, '', $value);
+									// Check if there already exists an entry with this filename. If so, this entry will not be stored (filename must be unique)
+									$sql = 'SELECT COUNT(*) AS `total` FROM `tbl_entries_data_'.$associatedFieldID.'` WHERE `file` = \''.$filename.'\';';
+									$total = Symphony::Database()->fetchVar('total', 0, $sql);
+									// echo $filename.': '.$total.'<br />';
+									// echo $total;
+									if($total == 0)
+									{
+										// echo $total;
+										$data = $field->processRawFieldData($value, $field->__OK__);
+										$data['file'] = $filename;
+										$data['size'] = filesize(DOCROOT.$destination.'/'.$value);
+										$data['mimetype'] = mime_content_type(DOCROOT.$destination.'/'.$value);
+										$data['meta'] = serialize($field->getMetaInfo(DOCROOT.$destination.'/'.$value, $data['mimetype']));
+										$entry->setData($associatedFieldID, $data);
+									} else {
+										// File already exists, don't store:
+										$store = false;
+										
+									}
+								}
+							} else {
+								$data = $field->processRawFieldData($value, $field->__OK__);							
+								$entry->setData($associatedFieldID, $data);
+							}
+							
 						}
 						if($isUnique)
 						{
-							// This value is marked is unique. Check if there is an existing item in the database:
+							// This value is marked is unique. Check if there is an existing item with this value in the database:
 							$entryID = $this->__scanDatabase($value, $associatedFieldID);
 							if($entryID != false)
 							{
@@ -202,23 +237,24 @@
 								switch($uniqueAction)
 								{
 									case 'overwrite' :
-										{
-											// Overwrite the existing entry:
-											$entry->set('id', $entryID);
-											$new = false;
-											break;
-										}
+									{
+										// Overwrite the existing entry:
+										$entry->set('id', $entryID);
+										$new = false;
+										break;
+									}
 									case 'ignore' :
-										{
-											// Don't store this entry:
-											$store = false;
-											break;
-										}										
+									{
+										// Don't store this entry:
+										$store = false;
+										break;
+									}
 								}
 							}
 						} 
 						$i++;					
 					}
+					
 					// Store the entry:
 					if($store)
 					{
@@ -304,6 +340,8 @@
 						// Delete line-endings:
 						$value = str_replace(array("\n", "\r"), '', $value);
 						$line[] = '"'.str_replace('"', '""', $value).'"';
+					} elseif(isset($data['file'])) {
+						$line[] = '"'.str_replace('"', '""', $data['file']).'"';
 					} else {
 						$line[] = '';
 					}
@@ -315,4 +353,80 @@
 		
 		
 		
+	}
+	
+	if(!function_exists('mime_content_type')) {
+
+		function mime_content_type($filename) {
+	
+			$mime_types = array(
+	
+				'txt' => 'text/plain',
+				'htm' => 'text/html',
+				'html' => 'text/html',
+				'php' => 'text/html',
+				'css' => 'text/css',
+				'js' => 'application/javascript',
+				'json' => 'application/json',
+				'xml' => 'application/xml',
+				'swf' => 'application/x-shockwave-flash',
+				'flv' => 'video/x-flv',
+	
+				// images
+				'png' => 'image/png',
+				'jpe' => 'image/jpeg',
+				'jpeg' => 'image/jpeg',
+				'jpg' => 'image/jpeg',
+				'gif' => 'image/gif',
+				'bmp' => 'image/bmp',
+				'ico' => 'image/vnd.microsoft.icon',
+				'tiff' => 'image/tiff',
+				'tif' => 'image/tiff',
+				'svg' => 'image/svg+xml',
+				'svgz' => 'image/svg+xml',
+	
+				// archives
+				'zip' => 'application/zip',
+				'rar' => 'application/x-rar-compressed',
+				'exe' => 'application/x-msdownload',
+				'msi' => 'application/x-msdownload',
+				'cab' => 'application/vnd.ms-cab-compressed',
+	
+				// audio/video
+				'mp3' => 'audio/mpeg',
+				'qt' => 'video/quicktime',
+				'mov' => 'video/quicktime',
+	
+				// adobe
+				'pdf' => 'application/pdf',
+				'psd' => 'image/vnd.adobe.photoshop',
+				'ai' => 'application/postscript',
+				'eps' => 'application/postscript',
+				'ps' => 'application/postscript',
+	
+				// ms office
+				'doc' => 'application/msword',
+				'rtf' => 'application/rtf',
+				'xls' => 'application/vnd.ms-excel',
+				'ppt' => 'application/vnd.ms-powerpoint',
+	
+				// open office
+				'odt' => 'application/vnd.oasis.opendocument.text',
+				'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
+			);
+	
+			$ext = strtolower(array_pop(explode('.',$filename)));
+			if (array_key_exists($ext, $mime_types)) {
+				return $mime_types[$ext];
+			}
+			elseif (function_exists('finfo_open')) {
+				$finfo = finfo_open(FILEINFO_MIME);
+				$mimetype = finfo_file($finfo, $filename);
+				finfo_close($finfo);
+				return $mimetype;
+			}
+			else {
+				return 'application/octet-stream';
+			}
+		}
 	}
