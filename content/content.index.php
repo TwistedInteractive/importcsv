@@ -4,6 +4,7 @@
 	require_once(TOOLKIT . '/class.fieldmanager.php');
 	require_once(TOOLKIT . '/class.entrymanager.php');
 	require_once(TOOLKIT . '/class.entry.php');
+	require_once(EXTENSIONS.'/importcsv/lib/parsecsv-0.3.2/parsecsv.lib.php');			
 	
 	class contentExtensionImportcsvIndex extends AdministrationPage
 	{
@@ -52,9 +53,11 @@
 			$fieldset = new XMLElement('fieldset', null, array('class'=>'left'));
 			$fieldset->appendChild(new XMLElement('h2', __('Import CSV')));
 			$fieldset->appendChild(new XMLElement('p', __('Select an XML-file to upload:')));
+			
 			$file = new XMlElement('label');
 			$file->appendChild(Widget::Input('csv-file', null, 'file'));
 			$fieldset->appendChild($file);
+			
 			$fieldset->appendChild(new XMLElement('p', __('Select a section as target:')));
 			
 			$sm = new SectionManager($this);
@@ -88,72 +91,67 @@
 		private function __importStep2Page()
 		{
 			move_uploaded_file($_FILES['csv-file']['tmp_name'], $this->tmpFile);
-			// Read the first line:
-			if (($handle = fopen($this->tmpFile, "r")) !== false) {
-				$data = fgetcsv($handle, 1000, ",");
-				fclose($handle);
-				
-				$fieldset = new XMLElement('fieldset');
-				$fieldset->appendChild(new XMLElement('h2', __('Select corresponding field')));
-				$fieldset->appendChild(new XMLElement('p', __('Please select the corresponding field which should be used to populate the entry with:')));
-				$table = new XMLElement('table', null, array('class'=>'import'));
-				
-				$sectionID = $_POST['section'];
-				$sm = new SectionManager($this);
-				$section = $sm->fetch($sectionID);
-				$fields = $section->fetchFields();
-				
-				$options = array();
-				$options[] = array(0, false, 'Don\'t use', 'dont-use');
-				foreach($fields as $field)
-				{
-					$options[] = array($field->get('id'), false, $field->get('label'));
-				}
-				
-				$i = 0;
-				foreach($data as $key)
-				{
-					foreach($options as &$option)
-					{
-						$option[1] = false;
-						if(strtolower($option[2]) == strtolower($key)) {
-							$option[1] = true;
-						}
-					}
-					$row = new XMLElement('tr');
-					$row->appendChild(new XMLElement('th', $key));
-					$row->appendChild(new XMLElement('td', '→'));
-					$fieldSelector = new XMLElement('td');
-					$fieldSelector->appendChild(Widget::Select('field-'.$i, $options, array('class'=>'small')));
-					$row->appendChild($fieldSelector);
-					$uniqueSelector = new XMLElement('td');
-					$uniqueSelector->appendChild(new XMLElement('input', 'Unique', array('type'=>'checkbox', 'name'=>'unique-'.$i)));
-					$row->appendChild($uniqueSelector);
-					$table->appendChild($row);
-					$i++;
-				}
-				
-				$fieldset->appendChild($table);
-				$fieldset->appendChild(new XMLElement('p', __('To import fields of the type <em>\'upload field\'</em>, make sure the filename used in your CSV is the same as the file you wish to import. Also, the file you wish to import should already be placed manually in the correct folder (which is the folder you picked as destination folder for the field).')));
-				$fieldset->appendChild(new XMLElement('p', __('When a field is marked as \'unique\' special rules will apply if an entry with one ore more unique values already exists.')));
-				$uniqueOptions = array();
-				$uniqueOptions[] = array('default', false, 'Add new entry anyway (default)');
-				// $uniqueOptions[] = array('merge', false, 'Replace existing values with new values (merge)');
-				$uniqueOptions[] = array('ignore', false, 'Do nothing (ignore)');
-				$uniqueOptions[] = array('overwrite', false, 'Replace existing entry with new one (overwrite)');
-				$label = new XMLElement('label', 'With unique fields:');
-				$label->appendChild(Widget::Select('unique-action', $uniqueOptions, array('class'=>'small')));
-				$fieldset->appendChild($label);
-				$fieldset->appendChild(new XMLElement('input', ' Ignore first line', array('type'=>'checkbox', 'name'=>'ignore', 'checked'=>'checked')));
-				$fieldset->appendChild(new XMLElement('input', null, array('type'=>'hidden', 'name'=>'section', 'value'=>$sectionID)));
-				$fieldset->appendChild(new XMLElement('p', __('<br />Please double-check everything. Clicking on \'import\' will start the import process. There is no undo.')));
-				$fieldset->appendChild(new XMLElement('p', __('<p><em>The use of this software is at your own risk. This software is licenced under the <a href="http://en.wikipedia.org/wiki/MIT_License" target="_blank">MIT Licence</a>.</em></p>')));
-				$fieldset->appendChild(Widget::Input('import-step-3', __('Import'), 'submit'));
-				
-				$this->Form->appendChild($fieldset);
-			} else {
-				$this->Form->appendChild(new XMLElement('p', __('Something went horribly wrong!')));
+			
+			$csv = new parseCSV();
+			$csv->auto($this->tmpFile);
+			
+			$fieldset = new XMLElement('fieldset');
+			$fieldset->appendChild(new XMLElement('h2', __('Select corresponding field')));
+			$fieldset->appendChild(new XMLElement('p', __('Please select the corresponding field which should be used to populate the entry with:')));
+			$table = new XMLElement('table', null, array('class'=>'import'));
+			
+			$sectionID = $_POST['section'];
+			$sm = new SectionManager($this);
+			$section = $sm->fetch($sectionID);
+			$fields = $section->fetchFields();
+			
+			$options = array();
+			$options[] = array(0, false, 'Don\'t use', 'dont-use');
+			foreach($fields as $field)
+			{
+				$options[] = array($field->get('id'), false, $field->get('label'));
 			}
+			
+			$i = 0;
+			foreach($csv->titles as $key)
+			{
+				foreach($options as &$option)
+				{
+					$option[1] = false;
+					if(strtolower($option[2]) == strtolower($key)) {
+						$option[1] = true;
+					}
+				}
+				$row = new XMLElement('tr');
+				$row->appendChild(new XMLElement('th', $key));
+				$row->appendChild(new XMLElement('td', '→'));
+				$fieldSelector = new XMLElement('td');
+				$fieldSelector->appendChild(Widget::Select('field-'.$i, $options, array('class'=>'small')));
+				$row->appendChild($fieldSelector);
+				$uniqueSelector = new XMLElement('td');
+				$uniqueSelector->appendChild(new XMLElement('input', 'Unique', array('type'=>'checkbox', 'name'=>'unique-'.$i)));
+				$row->appendChild($uniqueSelector);
+				$table->appendChild($row);
+				$i++;
+			}
+			
+			$fieldset->appendChild($table);
+			$fieldset->appendChild(new XMLElement('p', __('To import fields of the type <em>\'upload field\'</em>, make sure the filename used in your CSV is the same as the file you wish to import. Also, the file you wish to import should already be placed manually in the correct folder (which is the folder you picked as destination folder for the field).')));
+			$fieldset->appendChild(new XMLElement('p', __('When a field is marked as \'unique\' special rules will apply if an entry with one ore more unique values already exists.')));
+			$uniqueOptions = array();
+			$uniqueOptions[] = array('default', false, 'Add new entry anyway (default)');
+			// $uniqueOptions[] = array('merge', false, 'Replace existing values with new values (merge)');
+			$uniqueOptions[] = array('ignore', false, 'Do nothing (ignore)');
+			$uniqueOptions[] = array('overwrite', false, 'Replace existing entry with new one (overwrite)');
+			$label = new XMLElement('label', 'With unique fields:');
+			$label->appendChild(Widget::Select('unique-action', $uniqueOptions, array('class'=>'small')));
+			$fieldset->appendChild($label);
+			$fieldset->appendChild(new XMLElement('input', null, array('type'=>'hidden', 'name'=>'section', 'value'=>$sectionID)));
+			$fieldset->appendChild(new XMLElement('p', __('<br />Please double-check everything. Clicking on \'import\' will start the import process. There is no undo.')));
+			$fieldset->appendChild(new XMLElement('p', __('<p><em>The use of this software is at your own risk. This software is licenced under the <a href="http://en.wikipedia.org/wiki/MIT_License" target="_blank">MIT Licence</a>.</em></p>')));
+			$fieldset->appendChild(Widget::Input('import-step-3', __('Import'), 'submit'));
+			
+			$this->Form->appendChild($fieldset);
 		}
 		
 		
@@ -163,123 +161,114 @@
 			// Store the entries:
 			$sectionID		= $_POST['section'];
 			$uniqueAction	= $_POST['unique-action'];
-			$ignore			= isset($_POST['ignore']);
+			// $ignore			= isset($_POST['ignore']);
 			$countNew		= 0;
 			$countUpdated	= 0;
 			$countIgnored	= 0;
 			
 			$fm = new FieldManager($this);
+			$csv = new parseCSV();
+			$csv->auto($this->tmpFile);
 			
-			// Read the CSV file:
-			if (($handle = fopen($this->tmpFile, "r")) !== false) {
-				if($ignore) {
-					// Ignore the first line by reading it:
-					fgetcsv($handle);
+			foreach($csv->data as $key => $data) {
+				// Store the data in a new entry:
+				$entry = new Entry($this);
+				$entry->set('section_id', $sectionID);
+				$i = 0;
+				$store = true;
+				$new   = true;
+				foreach($data as $value)
+				{
+					$associatedFieldID = $_POST['field-'.$i];
+					$isUnique = isset($_POST['unique-'.$i]);
+					if($associatedFieldID != 0)
+					{
+						// This value needs to be stored
+						$field = $fm->fetch($associatedFieldID);
+						// Check if the field is of the type 'upload':
+						if($field->get('type') == 'upload')
+						{
+							$destination = $field->get('destination');
+							// Check if the file exists:
+							if(file_exists(DOCROOT.$destination.'/'.$value))
+							{
+								// File exists, create the link:
+								$filename = str_replace('/workspace/', '/', $destination).'/'.str_replace($destination, '', $value);
+								// Check if there already exists an entry with this filename. If so, this entry will not be stored (filename must be unique)
+								$sql = 'SELECT COUNT(*) AS `total` FROM `tbl_entries_data_'.$associatedFieldID.'` WHERE `file` = \''.$filename.'\';';
+								$total = Symphony::Database()->fetchVar('total', 0, $sql);
+								// echo $filename.': '.$total.'<br />';
+								// echo $total;
+								if($total == 0)
+								{
+									// echo $total;
+									$data = $field->processRawFieldData($value, $field->__OK__);
+									$data['file'] = $filename;
+									$data['size'] = filesize(DOCROOT.$destination.'/'.$value);
+									$data['mimetype'] = mime_content_type(DOCROOT.$destination.'/'.$value);
+									$data['meta'] = serialize($field->getMetaInfo(DOCROOT.$destination.'/'.$value, $data['mimetype']));
+									$entry->setData($associatedFieldID, $data);
+								} else {
+									// File already exists, don't store:
+									$store = false;
+									
+								}
+							}
+						} else {								
+							$data = $field->processRawFieldData($value, $field->__OK__);							
+							$entry->setData($associatedFieldID, $data);
+						}
+						
+					}
+					if($isUnique)
+					{
+						// This value is marked is unique. Check if there is an existing item with this value in the database:
+						$entryID = $this->__scanDatabase($value, $associatedFieldID);
+						if($entryID != false)
+						{
+							// See what rules apply:							
+							switch($uniqueAction)
+							{
+								case 'overwrite' :
+								{
+									// Overwrite the existing entry:
+									$entry->set('id', $entryID);
+									$new = false;
+									break;
+								}
+								case 'ignore' :
+								{
+									// Don't store this entry:
+									$store = false;
+									break;
+								}
+							}
+						}
+					} 
+					$i++;					
 				}
 				
-				while (($data = fgetcsv($handle)) !== false) {
-					// Store the data in a new entry:
-					$entry = new Entry($this);
-					$entry->set('section_id', $sectionID);
-					$i = 0;
-					$store = true;
-					$new   = true;
-					foreach($data as $value)
+				// Store the entry:
+				if($store)
+				{
+					$entry->commit();
+					if($new)
 					{
-						$associatedFieldID = $_POST['field-'.$i];
-						$isUnique = isset($_POST['unique-'.$i]);
-						if($associatedFieldID != 0)
-						{
-							// This value needs to be stored
-							$field = $fm->fetch($associatedFieldID);
-							// Check if the field is of the type 'upload':
-							if($field->get('type') == 'upload')
-							{
-								$destination = $field->get('destination');
-								// Check if the file exists:
-								if(file_exists(DOCROOT.$destination.'/'.$value))
-								{
-									// File exists, create the link:
-									$filename = str_replace('/workspace/', '/', $destination).'/'.str_replace($destination, '', $value);
-									// Check if there already exists an entry with this filename. If so, this entry will not be stored (filename must be unique)
-									$sql = 'SELECT COUNT(*) AS `total` FROM `tbl_entries_data_'.$associatedFieldID.'` WHERE `file` = \''.$filename.'\';';
-									$total = Symphony::Database()->fetchVar('total', 0, $sql);
-									// echo $filename.': '.$total.'<br />';
-									// echo $total;
-									if($total == 0)
-									{
-										// echo $total;
-										$data = $field->processRawFieldData($value, $field->__OK__);
-										$data['file'] = $filename;
-										$data['size'] = filesize(DOCROOT.$destination.'/'.$value);
-										$data['mimetype'] = mime_content_type(DOCROOT.$destination.'/'.$value);
-										$data['meta'] = serialize($field->getMetaInfo(DOCROOT.$destination.'/'.$value, $data['mimetype']));
-										$entry->setData($associatedFieldID, $data);
-									} else {
-										// File already exists, don't store:
-										$store = false;
-										
-									}
-								}
-							} else {
-								$data = $field->processRawFieldData($value, $field->__OK__);							
-								$entry->setData($associatedFieldID, $data);
-							}
-							
-						}
-						if($isUnique)
-						{
-							// This value is marked is unique. Check if there is an existing item with this value in the database:
-							$entryID = $this->__scanDatabase($value, $associatedFieldID);
-							if($entryID != false)
-							{
-								// See what rules apply:							
-								switch($uniqueAction)
-								{
-									case 'overwrite' :
-									{
-										// Overwrite the existing entry:
-										$entry->set('id', $entryID);
-										$new = false;
-										break;
-									}
-									case 'ignore' :
-									{
-										// Don't store this entry:
-										$store = false;
-										break;
-									}
-								}
-							}
-						} 
-						$i++;					
-					}
-					
-					// Store the entry:
-					if($store)
-					{
-						$entry->commit();
-						if($new)
-						{
-							$countNew++;
-						} else {
-							$countUpdated++;
-						}
+						$countNew++;
 					} else {
-						$countIgnored++;
+						$countUpdated++;
 					}
+				} else {
+					$countIgnored++;
 				}
-				fclose($handle);
-				// Import is complete, delete temporary file:
-				unlink($this->tmpFile);
-				// Show output message
-				$this->Form->appendChild(new XMLElement('h2', __('Import Complete')));
-				$this->Form->appendChild(new XMLElement('p', __('Newly added entries: '.$countNew)));
-				$this->Form->appendChild(new XMLElement('p', __('Updated entries: '.$countUpdated)));
-				$this->Form->appendChild(new XMLElement('p', __('Ignored entries: '.$countIgnored)));			
-			} else {
-				$this->Form->appendChild(new XMLElement('p', __('Cannot open file!')));
-			}
+			}				
+			// Import is complete, delete temporary file:
+			unlink($this->tmpFile);
+			// Show output message
+			$this->Form->appendChild(new XMLElement('h2', __('Import Complete')));
+			$this->Form->appendChild(new XMLElement('p', __('Newly added entries: '.$countNew)));
+			$this->Form->appendChild(new XMLElement('p', __('Updated entries: '.$countUpdated)));
+			$this->Form->appendChild(new XMLElement('p', __('Ignored entries: '.$countIgnored)));			
 		}
 		
 		
