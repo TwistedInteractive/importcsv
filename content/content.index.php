@@ -139,10 +139,10 @@
 			$fieldset->appendChild(new XMLElement('p', __('To import fields of the type <em>\'upload field\'</em>, make sure the filename used in your CSV is the same as the file you wish to import. Also, the file you wish to import should already be placed manually in the correct folder (which is the folder you picked as destination folder for the field).')));
 			$fieldset->appendChild(new XMLElement('p', __('When a field is marked as \'unique\' special rules will apply if an entry with one ore more unique values already exists.')));
 			$uniqueOptions = array();
-			$uniqueOptions[] = array('default', false, 'Add new entry anyway (default)');
-			// $uniqueOptions[] = array('merge', false, 'Replace existing values with new values (merge)');
-			$uniqueOptions[] = array('ignore', false, 'Do nothing (ignore)');
-			$uniqueOptions[] = array('overwrite', false, 'Replace existing entry with new one (overwrite)');
+			$uniqueOptions[] = array('default', false, __('Add new entry anyway (default)'));
+			$uniqueOptions[] = array('update', false, __('Update existing value (update)'));
+			$uniqueOptions[] = array('ignore', false, __('Do nothing (ignore)'));
+			$uniqueOptions[] = array('overwrite', false, __('Replace existing entry with new one (overwrite)'));
 			$label = new XMLElement('label', 'With unique fields:');
 			$label->appendChild(Widget::Select('unique-action', $uniqueOptions, array('class'=>'small')));
 			$fieldset->appendChild($label);
@@ -162,10 +162,10 @@
 			$sectionID		= $_POST['section'];
 			$uniqueAction	= $_POST['unique-action'];
 			// $ignore			= isset($_POST['ignore']);
-			$countNew		= 0;
-			$countUpdated	= 0;
-			$countIgnored	= 0;
-			
+			$countNew			= 0;
+			$countUpdated		= 0;
+			$countIgnored		= 0;
+			$countOverwritten	= 0;
 			$fm = new FieldManager($this);
 			$csv = new parseCSV();
 			$csv->auto($this->tmpFile);
@@ -175,91 +175,129 @@
 				$entry = new Entry($this);
 				$entry->set('section_id', $sectionID);
 				$i = 0;
-				$store = true;
-				$new   = true;
+				$store  = true;
+				$new    = true;
+				$update = false;
 				foreach($data as $value)
 				{
-					$associatedFieldID = $_POST['field-'.$i];
-					$isUnique = isset($_POST['unique-'.$i]);
-					if($associatedFieldID != 0)
+					// If there is detected an update, do not process the next functions, for it will waste precious cpu power:
+					if(!$update)
 					{
-						// This value needs to be stored
-						$field = $fm->fetch($associatedFieldID);
-						// Check if the field is of the type 'upload':
-						if($field->get('type') == 'upload')
+						$associatedFieldID = $_POST['field-'.$i];
+						$isUnique = isset($_POST['unique-'.$i]);
+						if($associatedFieldID != 0)
 						{
-							$destination = $field->get('destination');
-							// Check if the file exists:
-							if(file_exists(DOCROOT.$destination.'/'.$value))
+							// This value needs to be stored
+							$field = $fm->fetch($associatedFieldID);
+							// Check if the field is of the type 'upload':
+							if($field->get('type') == 'upload')
 							{
-								// File exists, create the link:
-								$filename = str_replace('/workspace/', '/', $destination).'/'.str_replace($destination, '', $value);
-								// Check if there already exists an entry with this filename. If so, this entry will not be stored (filename must be unique)
-								$sql = 'SELECT COUNT(*) AS `total` FROM `tbl_entries_data_'.$associatedFieldID.'` WHERE `file` = \''.$filename.'\';';
-								$total = Symphony::Database()->fetchVar('total', 0, $sql);
-								// echo $filename.': '.$total.'<br />';
-								// echo $total;
-								if($total == 0)
+								$destination = $field->get('destination');
+								// Check if the file exists:
+								if(file_exists(DOCROOT.$destination.'/'.$value))
 								{
+									// File exists, create the link:
+									$filename = str_replace('/workspace/', '/', $destination).'/'.str_replace($destination, '', $value);
+									// Check if there already exists an entry with this filename. If so, this entry will not be stored (filename must be unique)
+									$sql = 'SELECT COUNT(*) AS `total` FROM `tbl_entries_data_'.$associatedFieldID.'` WHERE `file` = \''.$filename.'\';';
+									$total = Symphony::Database()->fetchVar('total', 0, $sql);
+									// echo $filename.': '.$total.'<br />';
 									// echo $total;
-									$data = $field->processRawFieldData($value, $field->__OK__);
-									$data['file'] = $filename;
-									$data['size'] = filesize(DOCROOT.$destination.'/'.$value);
-									$data['mimetype'] = mime_content_type(DOCROOT.$destination.'/'.$value);
-									$data['meta'] = serialize($field->getMetaInfo(DOCROOT.$destination.'/'.$value, $data['mimetype']));
-									$entry->setData($associatedFieldID, $data);
-								} else {
-									// File already exists, don't store:
-									$store = false;
-									
+									if($total == 0)
+									{
+										// echo $total;
+										$fileData = $field->processRawFieldData($value, $field->__OK__);
+										$fileData['file'] = $filename;
+										$fileData['size'] = filesize(DOCROOT.$destination.'/'.$value);
+										$fileData['mimetype'] = mime_content_type(DOCROOT.$destination.'/'.$value);
+										$fileData['meta'] = serialize($field->getMetaInfo(DOCROOT.$destination.'/'.$value, $fileData['mimetype']));
+										$entry->setData($associatedFieldID, $fileData);
+									} else {
+										// File already exists, don't store:
+										$store = false;
+										
+									}
 								}
+							} else {								
+								$fieldData = $field->processRawFieldData($value, $field->__OK__);
+								$entry->setData($associatedFieldID, $fieldData);
 							}
-						} else {								
-							$data = $field->processRawFieldData($value, $field->__OK__);							
-							$entry->setData($associatedFieldID, $data);
+							
 						}
-						
-					}
-					if($isUnique)
-					{
-						// This value is marked is unique. Check if there is an existing item with this value in the database:
-						$entryID = $this->__scanDatabase($value, $associatedFieldID);
-						if($entryID != false)
+						if($isUnique)
 						{
-							// See what rules apply:							
-							switch($uniqueAction)
+							// This value is marked is unique. Check if there is an existing item with this value in the database:
+							$entryID = $this->__scanDatabase($value, $associatedFieldID);
+							if($entryID != false)
 							{
-								case 'overwrite' :
+								// See what rules apply:							
+								switch($uniqueAction)
 								{
-									// Overwrite the existing entry:
-									$entry->set('id', $entryID);
-									$new = false;
-									break;
-								}
-								case 'ignore' :
-								{
-									// Don't store this entry:
-									$store = false;
-									break;
+									case 'overwrite' :
+									{
+										// Overwrite the existing entry:
+										$entry->set('id', $entryID);
+										$new = false;
+										break;
+									}
+									case 'ignore' :
+									{
+										// Don't store this entry:
+										$store = false;
+										break;
+									}
+									case 'update' :
+									{
+										// Update this entry:
+										$update = true;
+										$store = false;
+										break;
+									}
 								}
 							}
 						}
-					} 
+					}
 					$i++;					
 				}
 				
 				// Store the entry:
 				if($store)
 				{
-					$entry->commit();
+					// $entry->commit();
 					if($new)
 					{
 						$countNew++;
 					} else {
-						$countUpdated++;
+						$countOverwritten++;
 					}
 				} else {
-					$countIgnored++;
+					if($update) {
+						// Update the entry:
+						// Get the original entry:
+						$em = new EntryManager($this);
+						$entry = $em->fetch($entryID);
+						$entry = $entry[0];
+						
+						$i = 0;						
+						// Get the original data and update it:
+						foreach($data as $value)
+						{
+							$associatedFieldID = $_POST['field-'.$i];
+							if($associatedFieldID != 0)
+							{
+								// $fieldData = $entry->getData($associatedFieldID);
+								$field = $fm->fetch($associatedFieldID);
+								$fieldData = $field->processRawFieldData($value, $field->__OK__, false, $entryID);
+								$entry->setData($associatedFieldID, $fieldData);
+							}
+							$i++;
+						}
+						$entry->commit();
+						
+						$countUpdated++;
+					} else {
+						$countIgnored++;
+					}
 				}
 			}				
 			// Import is complete, delete temporary file:
@@ -268,6 +306,7 @@
 			$this->Form->appendChild(new XMLElement('h2', __('Import Complete')));
 			$this->Form->appendChild(new XMLElement('p', __('Newly added entries: '.$countNew)));
 			$this->Form->appendChild(new XMLElement('p', __('Updated entries: '.$countUpdated)));
+			$this->Form->appendChild(new XMLElement('p', __('Overwritten entries: '.$countOverwritten)));
 			$this->Form->appendChild(new XMLElement('p', __('Ignored entries: '.$countIgnored)));			
 		}
 		
