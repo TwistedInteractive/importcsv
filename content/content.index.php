@@ -35,7 +35,7 @@
 			} elseif(isset($_POST['import-step-3'])) {
 				// Import step 3:
 				$this->__importStep3Page();
-			} elseif(isset($_POST['export'])) {
+			} elseif(isset($_REQUEST['export'])) {
 				// Export
 				$this->__exportPage();
 			} else {
@@ -82,7 +82,7 @@
 			$select->appendChild(Widget::Select('section-export', $options, array('class'=>'small')));
 			$fieldset->appendChild($select);
 			$fieldset->appendChild(Widget::Input('export', __('Export CSV'), 'submit'));
-			
+			$fieldset->appendChild(new XMLElement('p', __('<br /><strong>Tip:</strong> You can also create a direct link to export a certain section by creating a link like <code>/symphony/extension/importcsv/?export&amp;section-export=9</code>, where <code>section-export</code> is the ID of the section you wish to export. In combination with the <a href="https://github.com/makenosound/publish_shortcuts">publish shortcuts extension</a> this can be a great addition to your clients\' site.')));
 			$this->Form->appendChild($fieldset);
 		}
 		
@@ -336,7 +336,7 @@
 		
 		private function __exportPage()
 		{
-			$sectionID = $_POST['section-export'];
+			$sectionID = $_REQUEST['section-export'];
 			$sm = new SectionManager($this);
 			$em = new EntryManager($this);
 			$section = $sm->fetch($sectionID);
