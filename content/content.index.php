@@ -263,7 +263,7 @@
 				// Store the entry:
 				if($store)
 				{
-					// $entry->commit();
+					$entry->commit();
 					if($new)
 					{
 						$countNew++;
