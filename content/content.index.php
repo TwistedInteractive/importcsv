@@ -52,7 +52,7 @@
 			
 			$fieldset = new XMLElement('fieldset', null, array('class'=>'left'));
 			$fieldset->appendChild(new XMLElement('h2', __('Import CSV')));
-			$fieldset->appendChild(new XMLElement('p', __('Select an XML-file to upload:')));
+			$fieldset->appendChild(new XMLElement('p', __('Select a CSV file to upload:')));
 			
 			$file = new XMlElement('label');
 			$file->appendChild(Widget::Input('csv-file', null, 'file'));
@@ -218,6 +218,9 @@
 										
 									}
 								}
+							} elseif($field->get('type') == 'select') {
+							  $data = $field->processRawFieldData(explode(',', $value), $field->__OK__);
+							  $entry->setData($associatedFieldID, $data);
 							} else {								
 								$fieldData = $field->processRawFieldData($value, $field->__OK__);
 								$entry->setData($associatedFieldID, $fieldData);
