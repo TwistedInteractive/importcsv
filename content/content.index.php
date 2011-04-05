@@ -366,7 +366,10 @@
 					if(isset($data['value'])) {
 						$value = $data['value'];
 						// Delete line-endings:
-						$value = str_replace(array("\n", "\r"), '', $value);
+                        if(is_array($value)){
+                            $value = implode(', ', $value);
+                        }
+					    $value = str_replace(array("\n", "\r"), '', $value);
 						$line[] = '"'.str_replace('"', '""', $value).'"';
 					} elseif(isset($data['file'])) {
 						$line[] = '"'.str_replace('"', '""', $data['file']).'"';
