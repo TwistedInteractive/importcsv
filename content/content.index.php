@@ -185,6 +185,7 @@
 					{
 						$associatedFieldID = $_POST['field-'.$i];
 						$isUnique = isset($_POST['unique-'.$i]);
+
 						if($associatedFieldID != 0)
 						{
 							// This value needs to be stored
@@ -227,6 +228,8 @@
 							}
 							
 						}
+
+
 						if($isUnique)
 						{
 							// This value is marked is unique. Check if there is an existing item with this value in the database:
@@ -262,7 +265,7 @@
 					}
 					$i++;					
 				}
-				
+
 				// Store the entry:
 				if($store)
 				{
@@ -280,8 +283,8 @@
 						$em = new EntryManager($this);
 						$entry = $em->fetch($entryID);
 						$entry = $entry[0];
-						
-						$i = 0;						
+
+						$i = 0;
 						// Get the original data and update it:
 						foreach($data as $value)
 						{
@@ -290,7 +293,7 @@
 							{
 								// $fieldData = $entry->getData($associatedFieldID);
 								$field = $fm->fetch($associatedFieldID);
-								$fieldData = $field->processRawFieldData($value, $field->__OK__, false, $entryID);
+								$fieldData = $field->processRawFieldData(trim($value), $field->__OK__, false, $entryID);
 								$entry->setData($associatedFieldID, $fieldData);
 							}
 							$i++;
@@ -324,12 +327,11 @@
 		private function __scanDatabase($value, $fieldID)
 		{
 			$result = Symphony::Database()->fetch('DESCRIBE `tbl_entries_data_'.$fieldID.'`;');
-			// print_r($result);
 			foreach($result as $tableColumn)
 			{
 				if($tableColumn['Field'] == 'value')
 				{
-					$searchResult = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_'.$fieldID.'` WHERE `value` = \''.addslashes($value).'\';');
+					$searchResult = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_'.$fieldID.'` WHERE `value` = \''.addslashes(trim($value)).'\';');
 					return $searchResult;		
 				}
 			}			
