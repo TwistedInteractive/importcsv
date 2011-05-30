@@ -214,14 +214,14 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                             $data = $field->processRawFieldData(explode(',', $value), $field->__OK__);
                             $entry->setData($associatedFieldID, $data);
                         } elseif ($field->get('type') == 'selectbox_link') {
-                            // TODO: Import selectbox link:
+                            // Import selectbox link:
                             // Get the correct ID of the related fields
                             $related_field = Symphony::Database()->fetchVar('related_field_id', 0, 'SELECT `related_field_id` FROM `tbl_fields_selectbox_link` WHERE `field_id` = ' . $field->get('id'));
                             $data = $field->processRawFieldData(explode(',', $value), $field->__OK__);
                             $related_ids = array('relation_id'=>array());
                             foreach ($data['relation_id'] as $key => $value)
                             {
-                                $related_ids['relation_id'][] = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_' . $related_field . '` WHERE `value` = \'' . $value . '\';');
+                                $related_ids['relation_id'][] = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_' . $related_field . '` WHERE `value` = \'' . trim($value) . '\';');
                             }
                             $entry->setData($associatedFieldID, $related_ids);
                         } else {
