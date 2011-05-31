@@ -8,8 +8,8 @@ Class extension_importcsv extends Extension
 	{
 		return array(
 			'name' => 'Import/export CSV',
-			'version' => '0.1.4',
-			'release-date' => '2011-05-30',
+			'version' => '0.2',
+			'release-date' => '2011-05-31',
 			'author' => array(
 				'name' => 'Giel Berkers',
 				'website' => 'http://www.gielberkers.com',
@@ -27,7 +27,7 @@ Class extension_importcsv extends Extension
 			return array(
 				array(
 					'location'	=> 'System',
-					'name'		=> 'Import / export CSV',
+					'name'		=> __('Import / Export CSV'),
 					'link'		=> '/'
 				)
 			);

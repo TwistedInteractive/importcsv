@@ -6,6 +6,45 @@ fieldset.right { width: 50%; float: right; }
 
 table.import { border-collapse: collapse; cursor: pointer; margin-bottom: 1em; }
 table.import th, table.import td { text-align: left; border-bottom: 1px solid #ccc; padding: 3px 40px 3px 0; }
-table.import td { padding: 3px; }
+table.import td, table.import th { padding: 3px; }
+table.import th.unique { width: 80px; }
 
 option.dont-use { color: #800; }
+
+var { display: none; }
+
+div.progress {
+    border:  1px solid #ccc;
+    width: 100%;
+    height: 20px;
+    margin: 10px 0;
+}
+
+div.bar {
+    width: 0%;
+    height: 16px;
+    background:  #ddc;
+    word-wrap: normal;
+    white-space: nowrap;
+    padding: 2px 0;
+}
+
+div.console {
+    width: 100%;
+    height: 300px;
+    border: 1px solid #ccc;
+    overflow: auto;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+div.console span {
+    display: block;
+    border-bottom:  1px solid #eee;
+    padding: 2px;
+}
+
+div.console span.error {
+    color: #800;
+    background:  #fcc;
+}
