@@ -42,12 +42,13 @@ class ImportDriver_default {
 
     /**
      * Process the data so it can be imported into the entry.
-     * @param  $value   The value to import
+     * @param  $value       The value to import
+     * @param  $entry_id    If a duplicate is found, an entry ID will be provided.
      * @return The data returned by the field object
      */
-    public function import($value)
+    public function import($value, $entry_id = null)
     {
-        $data = $this->field->processRawFieldData($value, $this->field->__OK__);
+        $data = $this->field->processRawFieldData($value, $this->field->__OK__, false, $entry_id);
         return $data;
     }
 

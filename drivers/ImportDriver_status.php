@@ -1,18 +1,18 @@
 <?php
 
 /*
- * Import Driver for type: memberpassword
+ * Import Driver for type: status
  */
 
-class ImportDriver_memberpassword extends ImportDriver_default {
+class ImportDriver_status extends ImportDriver_default {
 
     /**
      * Constructor
      * @return void
      */
-    public function ImportDriver_memberpassword()
+    public function ImportDriver_status()
     {
-        $this->type = 'memberpassword';
+        $this->type = 'status';
     }
 
     /**
@@ -23,9 +23,7 @@ class ImportDriver_memberpassword extends ImportDriver_default {
      */
     public function import($value, $entry_id = null)
     {
-        $data = $this->field->processRawFieldData($value, $this->field->__OK__);
-        // Reset the value, to prevent double md5:
-        $data['password'] = $value;
+        $data = $this->field->processRawFieldData($value, $this->field->__OK__, false, $entry_id);
         return $data;
     }
 
@@ -36,7 +34,12 @@ class ImportDriver_memberpassword extends ImportDriver_default {
      */
     public function export($data)
     {
-        return $data['password'];
+        if(isset($data['value']))
+        {
+            return $data['value'];
+        } else {
+            return '';
+        }
     }
 
 }
