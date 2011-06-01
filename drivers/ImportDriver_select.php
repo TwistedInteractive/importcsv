@@ -36,9 +36,10 @@ class ImportDriver_select extends ImportDriver_default {
     /**
      * Process the data so it can be exported to a CSV
      * @param  $data    The data as provided by the entry
+     * @param  $entry_id    The ID of the entry that is exported
      * @return string   A string representation of the data to import into the CSV file
      */
-    public function export($data)
+    public function export($data, $entry_id = null)
     {
         if(is_array($data['value']))
         {

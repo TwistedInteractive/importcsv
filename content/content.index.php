@@ -357,10 +357,10 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                 $type = $field->get('type');
                 if (isset($drivers[$type])) {
                     $drivers[$type]->setField($field);
-                    $value = $drivers[$type]->export($data);
+                    $value = $drivers[$type]->export($data, $entry->get('id'));
                 } else {
                     $drivers['default']->setField($field);
-                    $value = $drivers['default']->export($data);
+                    $value = $drivers['default']->export($data, $entry->get('id'));
                 }
                 $line[] = '"' . str_replace('"', '""', $value) . '"';
             }
