@@ -164,68 +164,11 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         }
         $this->__addVar('field-ids', implode(',', $ids));
 
-
-        /*
-            // Have to put it all in HTML to prevent memory issues with larger CSV-files.
-            $count = 0;
-            $html = '';
-            foreach ($csvData as $key => $data)
-            {
-                $html .= '<var class="csv-' . $count . '">';
-
-                $i = 0;
-                foreach ($data as $value)
-                {
-                    $associatedFieldID = $_POST['field-' . $i];
-                    if ($associatedFieldID != 0) {
-                        $unique = $i == $uniqueField ? 'yes' : 'no';
-                        $html .= '<var field="' . $associatedFieldID . '" unique="' . $unique . '">' . $value . '</var>';
-                    }
-                    $i++;
-                }
-                $html .= '</var>';
-                $count++;
-            }
-            $this->Form->appendChild(new XMLElement('div', $html));
-        */
         $this->addScriptToHead(URL . '/extensions/importcsv/assets/import.js');
         $this->Form->appendChild(new XMLElement('h2', __('Import in progress...')));
         $this->Form->appendChild(new XMLElement('div', '<div class="bar"></div>', array('class' => 'progress')));
         $this->Form->appendChild(new XMLElement('div', null, array('class' => 'console')));
     }
-
-
-    /**
-     * Check to see if there exists an entry with a certain value and returns the ID of it.
-     * Note: This only works if the field-type stores it's data in a field called 'value'.
-     * @param    $value        string    The value to search for
-     * @param    $fieldID    int        The ID of the field.
-     * @return    mixed                The ID of the entry or null if no entry is found
-     */
-    private function __scanDatabase($value, $fieldID, $drivers)
-    {
-        /*
-        $result = Symphony::Database()->fetch('DESCRIBE `tbl_entries_data_' . $fieldID . '`;');
-        foreach ($result as $tableColumn)
-        {
-            if ($tableColumn['Field'] == 'value') {
-                $searchResult = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_' . $fieldID . '` WHERE `value` = \'' . addslashes(trim($value)) . '\';');
-                if ($searchResult != false) {
-                    return $searchResult;
-                } else {
-                    return null;
-                }
-
-            }
-        }
-        */
-
-
-
-
-        return null;
-    }
-
 
     private function getDrivers()
     {
@@ -300,7 +243,6 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                     if($uniqueField != 'no')
                     {
                         // Check if there is an entry with this value:
-                        // $entryID = $this->__scanDatabase($row[$csvTitles[$uniqueField]], $fieldIDs[$uniqueField]);
                         $field = $fm->fetch($fieldIDs[$uniqueField]);
                         $type = $field->get('type');
                         if (isset($drivers[$type])) {
@@ -323,7 +265,6 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                                     }
                                 case 'ignore' :
                                     {
-                                    // die(__('[DUPLICATE: IGNORED]'));
                                     $ignored[] = $entryID;
                                     break;
                                     }
@@ -375,118 +316,6 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         die('[OK]' . $messageSuffix);
     }
-
-    /**
-     * This function imports an induvidial entry
-     */
-    /*
-    private function __ajaxImport()
-    {
-        // Load the drivers:
-        $drivers = $this->getDrivers();
-
-        // Load the fields:
-        $sectionID = $_POST['section-id'];
-        $uniqueAction = $_POST['unique-action'];
-        $uniqueField = $_POST['unique-field'];
-        $uniqueFound = false;
-        $uniqueID = 0;
-        $uniqueValue = 0;
-        $messageSuffix = '';
-        $entryID = null;
-
-        // Load the fieldmanager:
-        $fm = new FieldManager($this);
-
-        // Start by creating a new entry:
-        $entry = new Entry($this);
-        $entry->set('section_id', $sectionID);
-
-        // First check which field is the update-field:
-        if ($_POST['unique-field'] != 'no') {
-            $i = 0;
-            foreach ($_POST as $key => $value)
-            {
-                if (substr($key, 0, 6) == 'field-' && !$uniqueFound) {
-                    if ($uniqueField == $i && $uniqueFound == false) {
-                        $a = explode('-', $key);
-                        if (count($a) == 2) {
-                            $fieldID = intval($a[1]);
-                            // Check for an update:
-                            $uniqueFound = true;
-                            $uniqueID = $fieldID;
-                            $uniqueValue = $value;
-                        } else {
-                            die(__('[ERROR: No field id sent for: "' . $value . '"]'));
-                        }
-                    }
-                    $i++;
-                }
-            }
-        }
-
-        // When a unique value is found, see if there is an entry with the ID:
-        if ($uniqueFound) {
-            // See if there is an entry with this value:
-            $entryID = $this->__scanDatabase($uniqueValue, $uniqueID);
-            if ($entryID != false) {
-                // Update? Ignore? Add new?
-                switch ($uniqueAction)
-                {
-                    case 'update' :
-                        {
-                        $entry->set('id', $entryID);
-                        $messageSuffix = ' updated entry: ' . $entryID;
-                        break;
-                        }
-                    case 'ignore' :
-                        {
-                        die(__('[DUPLICATE: IGNORED]'));
-                        break;
-                        }
-                }
-            }
-        }
-
-        // Do the actual importing:
-        // Get the post values:
-        $i = 0;
-        foreach ($_POST as $key => $value)
-        {
-            // When no unique field is found, treat it like a new entry
-            // Otherwise, stop processing to safe CPU power.
-            if (substr($key, 0, 6) == 'field-') {
-                $a = explode('-', $key);
-                if (count($a) == 2) {
-                    $fieldID = intval($a[1]);
-                    $field = $fm->fetch($fieldID);
-                    // Get the corresponding field-type:
-                    $type = $field->get('type');
-                    if (isset($drivers[$type])) {
-                        $drivers[$type]->setField($field);
-                        $data = $drivers[$type]->import($value, $entryID);
-                    } else {
-                        $drivers['default']->setField($field);
-                        $data = $drivers['default']->import($value, $entryID);
-                    }
-                    // Set the data:
-                    if ($data != false) {
-                        $entry->setData($fieldID, $data);
-                    }
-                } else {
-                    die(__('[ERROR: No field id sent for: "' . $value . '"]'));
-                }
-                $i++;
-            }
-        }
-
-        // Store the entry:
-        $entry->commit();
-
-        // When the script gets here, it means everything has worked out fine!
-        die('[OK]' . $messageSuffix);
-    }
-    */
 
     private function __exportPage()
     {
