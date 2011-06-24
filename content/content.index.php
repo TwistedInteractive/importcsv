@@ -6,16 +6,15 @@ require_once(TOOLKIT . '/class.fieldmanager.php');
 require_once(TOOLKIT . '/class.entrymanager.php');
 require_once(TOOLKIT . '/class.entry.php');
 require_once(EXTENSIONS . '/importcsv/lib/parsecsv-0.3.2/parsecsv.lib.php');
+require_once(CORE . '/class.cacheable.php');
 
 class contentExtensionImportcsvIndex extends AdministrationPage
 {
-    var $tmpFile;
 
     public function __construct(&$parent)
     {
         parent::__construct($parent);
         $this->setTitle('Symphony - Import / export CSV');
-        $this->tmpFile = MANIFEST . '/tmp/importcsv.csv';
     }
 
 
@@ -40,7 +39,8 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             $this->__exportPage();
         } elseif (isset($_POST['ajax'])) {
             // Ajax import:
-            $this->__ajaxImport();
+            // $this->__ajaxImport();
+            $this->__ajaxImportRows();
         } else {
             // Startpage:
             $this->__indexPage();
@@ -69,10 +69,31 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $this->Form->setAttribute('enctype', 'multipart/form-data');
     }
 
+    /**
+     * Get the CSV object as it is stored in the database.
+     * @return bool|mixed   the CSV object on success, false on failure
+     */
+    private function __getCSV()
+    {
+        $cache = new Cacheable(Symphony::Database());
+        $data  = $cache->check('importcsv');
+        if($data != false)
+        {
+            return unserialize($data['data']);
+        } else {
+            return false;
+        }
+    }
 
     private function __importStep2Page()
     {
-        move_uploaded_file($_FILES['csv-file']['tmp_name'], $this->tmpFile);
+        // Store the CSV data in the cache table, so the CSV file will not be stored on the server
+        $cache = new Cacheable(Symphony::Database());
+        // Get the nodes provided by this CSV file:
+        $csv = new parseCSV();
+        $csv->auto($_FILES['csv-file']['tmp_name']);
+        $cache->write('importcsv', serialize($csv), 60 * 60 * 24); // Store for one day
+
         $sectionID = $_POST['section'];
 
         // Generate the XML:
@@ -89,9 +110,6 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         }
         $xml->appendChild($fieldsNode);
 
-        // Get the nodes provided by this CSV file:
-        $csv = new parseCSV();
-        $csv->auto($this->tmpFile);
         $csvNode = new XMLElement('csv');
         foreach ($csv->titles as $key)
         {
@@ -123,8 +141,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $countIgnored = 0;
         $countOverwritten = 0;
         $fm = new FieldManager($this);
-        $csv = new parseCSV();
-        $csv->auto($this->tmpFile);
+        $csv = $this->__getCSV();
 
         // Load the information to start the importing process:
         $this->__addVar('section-id', $sectionID);
@@ -137,27 +154,40 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $csvTitles = $csv->titles;
         $this->__addVar('total-entries', count($csvData));
 
-        $count = 0;
-        // Have to put it all in HTML to prevent memory issues with larger CSV-files.
-        $html = '';
-        foreach ($csvData as $key => $data)
+        // Store the associated Field-ID's:
+        $i = 0;
+        $ids = array();
+        foreach ($csvTitles as $title)
         {
-            $html .= '<var class="csv-' . $count . '">';
-
-            $i = 0;
-            foreach ($data as $value)
-            {
-                $associatedFieldID = $_POST['field-' . $i];
-                if ($associatedFieldID != 0) {
-                    $unique = $i == $uniqueField ? 'yes' : 'no';
-                    $html .= '<var field="' . $associatedFieldID . '" unique="' . $unique . '">' . $value . '</var>';
-                }
-                $i++;
-            }
-            $html .= '</var>';
-            $count++;
+            $ids[] = $_POST['field-'. $i];
+            $i++;
         }
-        $this->Form->appendChild(new XMLElement('div', $html));
+        $this->__addVar('field-ids', implode(',', $ids));
+
+
+        /*
+            // Have to put it all in HTML to prevent memory issues with larger CSV-files.
+            $count = 0;
+            $html = '';
+            foreach ($csvData as $key => $data)
+            {
+                $html .= '<var class="csv-' . $count . '">';
+
+                $i = 0;
+                foreach ($data as $value)
+                {
+                    $associatedFieldID = $_POST['field-' . $i];
+                    if ($associatedFieldID != 0) {
+                        $unique = $i == $uniqueField ? 'yes' : 'no';
+                        $html .= '<var field="' . $associatedFieldID . '" unique="' . $unique . '">' . $value . '</var>';
+                    }
+                    $i++;
+                }
+                $html .= '</var>';
+                $count++;
+            }
+            $this->Form->appendChild(new XMLElement('div', $html));
+        */
         $this->addScriptToHead(URL . '/extensions/importcsv/assets/import.js');
         $this->Form->appendChild(new XMLElement('h2', __('Import in progress...')));
         $this->Form->appendChild(new XMLElement('div', '<div class="bar"></div>', array('class' => 'progress')));
@@ -172,8 +202,9 @@ class contentExtensionImportcsvIndex extends AdministrationPage
      * @param    $fieldID    int        The ID of the field.
      * @return    mixed                The ID of the entry or null if no entry is found
      */
-    private function __scanDatabase($value, $fieldID)
+    private function __scanDatabase($value, $fieldID, $drivers)
     {
+        /*
         $result = Symphony::Database()->fetch('DESCRIBE `tbl_entries_data_' . $fieldID . '`;');
         foreach ($result as $tableColumn)
         {
@@ -187,6 +218,11 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
             }
         }
+        */
+
+
+
+
         return null;
     }
 
@@ -213,6 +249,137 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         return $drivers;
     }
 
+    /**
+     * This function imports 10 rows of the CSV data
+     * @return void
+     */
+    private function __ajaxImportRows()
+    {
+        $messageSuffix = '';
+        $updated = array();
+        $ignored = array();
+
+        $csv = $this->__getCSV();
+        if($csv != false)
+        {
+            // Load the drivers:
+            $drivers = $this->getDrivers();
+
+            // Default parameters:
+            $currentRow = intval($_POST['row']);
+            $sectionID = $_POST['section-id'];
+            $uniqueAction = $_POST['unique-action'];
+            $uniqueField = $_POST['unique-field'];
+            $fieldIDs = explode(',', $_POST['field-ids']);
+            $entryID = null;
+
+            // Load the fieldmanager:
+            $fm = new FieldManager($this);
+
+            // Load the CSV data of the specific rows:
+            $csvTitles = $csv->titles;
+            $csvData = $csv->data;
+            for ($i = $currentRow * 10; $i < ($currentRow + 1) * 10; $i++)
+            {
+                // Start by creating a new entry:
+                $entry = new Entry($this);
+                $entry->set('section_id', $sectionID);
+                
+                // Import this row:
+                $row = $csvData[$i];
+                if($row != false)
+                {
+
+                    // If a unique field is used, make sure there is a field selected for this:
+                    if($uniqueField != 'no' && $fieldIDs[$uniqueField] == 0)
+                    {
+                        die(__('[ERROR: No field id sent for: "' . $csvTitles[$uniqueField] . '"]'));
+                    }
+
+                    // Unique action:
+                    if($uniqueField != 'no')
+                    {
+                        // Check if there is an entry with this value:
+                        // $entryID = $this->__scanDatabase($row[$csvTitles[$uniqueField]], $fieldIDs[$uniqueField]);
+                        $field = $fm->fetch($fieldIDs[$uniqueField]);
+                        $type = $field->get('type');
+                        if (isset($drivers[$type])) {
+                            $drivers[$type]->setField($field);
+                            $entryID = $drivers[$type]->scanDatabase($row[$csvTitles[$uniqueField]]);
+                        } else {
+                            $drivers['default']->setField($field);
+                            $entryID = $drivers['default']->scanDatabase($row[$csvTitles[$uniqueField]]);
+                        }
+
+                        if ($entryID != false) {
+                            // Update? Ignore? Add new?
+                            switch ($uniqueAction)
+                            {
+                                case 'update' :
+                                    {
+                                    $entry->set('id', $entryID);
+                                    $updated[] = $entryID;
+                                    break;
+                                    }
+                                case 'ignore' :
+                                    {
+                                    // die(__('[DUPLICATE: IGNORED]'));
+                                    $ignored[] = $entryID;
+                                    break;
+                                    }
+                            }
+                        }
+                    }
+
+                    // Do the actual importing:
+                    $j = 0;
+                    foreach ($row as $value)
+                    {
+                        // When no unique field is found, treat it like a new entry
+                        // Otherwise, stop processing to safe CPU power.
+                        $fieldID = intval($fieldIDs[$j]);
+                        $field = $fm->fetch($fieldID);
+                        // Get the corresponding field-type:
+                        $type = $field->get('type');
+                        if (isset($drivers[$type])) {
+                            $drivers[$type]->setField($field);
+                            $data = $drivers[$type]->import($value, $entryID);
+                        } else {
+                            $drivers['default']->setField($field);
+                            $data = $drivers['default']->import($value, $entryID);
+                        }
+                        // Set the data:
+                        if ($data != false) {
+                            $entry->setData($fieldID, $data);
+                        }
+                        $j++;
+                    }
+
+                    // Store the entry:
+                    $entry->commit();
+
+                }
+            }
+        } else {
+            die(__('[ERROR: CSV Data not found!]'));
+        }
+
+        if(count($updated) > 0)
+        {
+            $messageSuffix .= ' '.__('(updated: ').implode(', ', $updated).')';
+        }
+        if(count($ignored) > 0)
+        {
+            $messageSuffix .= ' '.__('(ignored: ').implode(', ', $updated).')';
+        }
+
+        die('[OK]' . $messageSuffix);
+    }
+
+    /**
+     * This function imports an induvidial entry
+     */
+    /*
     private function __ajaxImport()
     {
         // Load the drivers:
@@ -319,7 +486,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         // When the script gets here, it means everything has worked out fine!
         die('[OK]' . $messageSuffix);
     }
-
+    */
 
     private function __exportPage()
     {

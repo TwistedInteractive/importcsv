@@ -68,4 +68,25 @@ class ImportDriver_default {
         }
     }
 
+    /**
+     * Scan the database for a specific value
+     * @param  $value       The value to scan for
+     * @return null|string  The ID of the entry found, or null if no match is found.
+     */
+    public function scanDatabase($value)
+    {
+        $result = Symphony::Database()->fetch('DESCRIBE `tbl_entries_data_' . $this->field->get('id') . '`;');
+        foreach ($result as $tableColumn)
+        {
+            if ($tableColumn['Field'] == 'value') {
+                $searchResult = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_' . $this->field->get('id') . '` WHERE `value` = \'' . addslashes(trim($value)) . '\';');
+                if ($searchResult != false) {
+                    return $searchResult;
+                } else {
+                    return null;
+                }
+            }
+        }
+    }
+
 }

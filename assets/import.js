@@ -1,10 +1,12 @@
 var totalEntries;
 var currentEntry;
+var currentRow;
 var sectionID;
 var uniqueAction;
 var uniqueField;
 var importURL;
 var startTime;
+var fieldIDs;
 
 jQuery(function($){
     // Window resize function (for adjusting the height of the console):
@@ -19,6 +21,7 @@ jQuery(function($){
     uniqueAction = getVar('unique-action');
     uniqueField  = getVar('unique-field');
     importURL    = getVar('import-url');
+    fieldIDs     = getVar('field-ids');
 
     put('Start import of ' + totalEntries + ' entries; section ID: ' + sectionID + '; unique action: ' + uniqueAction);
 
@@ -26,9 +29,58 @@ jQuery(function($){
 
     if(totalEntries > 0)
     {
-        importRow(0);
+        // importRow(0);
+        importRows(0);
     }
 });
+
+/**
+ * Import 10 rows at the time
+ * @param nr
+ */
+function importRows(nr)
+{
+    currentRow = nr;
+    var fields = {};
+    fields.ajax = 1;
+    fields['unique-action'] = uniqueAction;
+    fields['unique-field'] = uniqueField;
+    fields['section-id'] = sectionID;
+    fields['row'] = currentRow;
+    fields['field-ids'] = fieldIDs;
+    jQuery.ajax({
+        url: importURL,
+        async: true,
+        type: 'post',
+        cache: false,
+        data: fields,
+        success: function(data, textStatus){
+            c = data.substring(0, 4) == '[OK]' ? null : 'error';
+            till = ((currentRow + 1) * 10) <= totalEntries ? ((currentRow + 1) * 10) : totalEntries;
+            put('Import entries ' + ((currentRow * 10) + 1) + ' - ' + till  + ' : ' + data, c);
+            jQuery("div.progress div.bar").css({width: (((currentRow * 10) / totalEntries) * 100) + '%'});
+            elapsedTime = new Date();
+            ms = elapsedTime.getTime() - startTime.getTime();
+            e = time(ms);
+            // eta = time(1 - (currentEntry / totalEntries) * ms);
+            p = ((currentRow * 10) / totalEntries);
+            eta = time((ms * (1/p)) - ms);
+
+            jQuery("div.progress div.bar").text('Elapsed time: ' + e + ' / Estimated time left: ' + eta);
+
+            // Check if the next entry should be imported:
+            if(((currentRow + 1) * 10) < totalEntries - 1)
+            {
+                importRows(currentRow + 1);
+            } else {
+                jQuery("div.progress div.bar").css({width: '100%'}).text('Import completed!');
+                put('Import completed!');
+            }
+            jQuery("div.console").attr({ scrollTop: jQuery("div.console").attr("scrollHeight") });
+        }
+    });
+
+}
 
 /**
  * Import the current row.
