@@ -1,7 +1,7 @@
 # Import / export CSV #
 
-Version: 0.2
-Release date: 2011-06-01
+Version: 0.2.2
+Release date: 2011-07-07
 Author: Giel Berkers  
 Website: http://www.gielberkers.com
 E-mail: info@gielberkers.com
@@ -16,7 +16,7 @@ imports and export of a specific field.
 
 For example, for select-fields the `ImportDriver_select` is used and for upload-fields the `ImportDriver_upload` is used.
 If no exact driver can be found, it falls back to `ImportDriver_default` which is good for most fields (as it simply relies
-on a `value`-field in your database table.
+on a `value`-field in your database table).
 
 ## Default drivers ##
 
@@ -25,6 +25,7 @@ Default drivers are packaged for:
 - Frontend Member Manager Password (to prevent double MD5-ing)
 - Select (to provide selecting of multiple values)
 - Selectbox link (to import and export while remaining human-readable values in your CSV)
+- Reference link (to import and export while remaining human-readable values in your CSV)
 - Status (to select the right value from the dedicated statusses-table)
 - Subsection Manager (to keep the multiple ID's intact)
 - Upload (to import files with CSV)
@@ -51,6 +52,19 @@ data that is provided by Symphony. Here you can do some post-processing to alter
 the select-driver stores multiple values as a single string, combining them with a comma. And the selectbox-link driver loads the human-readable
 value of the item to store in the CSV. The function should return a `$value`-parameter. This parameter is used by the extension to
 be placed in the CSV file.
+
+### scanDatabase($value) ###
+
+This is also an important function. It is used for updating entries. Basicly what it does, is scan the database to find an
+entry with the value specified. If a match is found, it returns the ID of the entry which in turn will get updated. If no match is
+found, `null` is returned.
+
+In the import-process it is used as followed: when you want to import something, and you selected a specific field as 'unique', that
+field will be used to scan the database for an existing value. Most of the times these are input fields or something, like an ID, a
+e-mail address, or something else that has a `value`-row in the database (which is the default behaviour).
+
+But if you have a field which **doesn't** have a `value`-row in the database, you need to specify an adjusted query in the driver.
+Otherwise it will *always* get imported as a new entry when that field is selected as the unique field.
 
 ### Make this extension better! ###
 

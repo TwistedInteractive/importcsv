@@ -8,8 +8,8 @@ Class extension_importcsv extends Extension
 	{
 		return array(
 			'name' => 'Import/export CSV',
-			'version' => '0.2.1',
-			'release-date' => '2011-05-31',
+			'version' => '0.2.2',
+			'release-date' => '2011-07-7',
 			'author' => array(
 				'name' => 'Giel Berkers',
 				'website' => 'http://www.gielberkers.com',
@@ -38,7 +38,7 @@ Class extension_importcsv extends Extension
     {
         if(file_exists(TMP.'/importcsv.csv'))
         {
-            @unlink('importcsv.csv');
+            @unlink(TMP.'/importcsv.csv');
         }
     }
 	
