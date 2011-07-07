@@ -340,7 +340,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         header('Content-Disposition: attachment; filename="' . $fileName . '"');
 
         // Show the headers:
-        echo implode(',', $headers) . "\n";
+        echo implode(';', $headers) . "\n";
 
         // Show the content:
         $entries = $em->fetch(null, $sectionID);
@@ -360,7 +360,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                 }
                 $line[] = '"' . str_replace('"', '""', $value) . '"';
             }
-            echo implode(',', $line) . "\n";
+            echo implode(';', $line) . "\r\n";
         }
         die();
     }
