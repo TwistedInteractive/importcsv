@@ -57,12 +57,15 @@ class ImportDriver_selectbox_link extends ImportDriver_default
         $related_values = array();
         foreach ($data['relation_id'] as $relation_id)
         {
-            $row = Symphony::Database()->fetchRow(0, 'SELECT * FROM `tbl_entries_data_' . $related_field . '` WHERE `entry_id` = ' . $relation_id . ';');
-            if (isset($row['value'])) {
-                $related_values[] = $row['value'];
-            } else {
-                // Fallback to empty value:
-                $related_values[] = '';
+            if(!empty($relation_id))
+            {
+                $row = Symphony::Database()->fetchRow(0, 'SELECT * FROM `tbl_entries_data_' . $related_field . '` WHERE `entry_id` = ' . $relation_id . ';');
+                if (isset($row['value'])) {
+                    $related_values[] = $row['value'];
+                } else {
+                    // Fallback to empty value:
+                    $related_values[] = '';
+                }
             }
         }
         return implode(', ', $related_values);
