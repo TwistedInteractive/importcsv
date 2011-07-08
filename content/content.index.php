@@ -279,19 +279,23 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                         // When no unique field is found, treat it like a new entry
                         // Otherwise, stop processing to safe CPU power.
                         $fieldID = intval($fieldIDs[$j]);
-                        $field = $fm->fetch($fieldID);
-                        // Get the corresponding field-type:
-                        $type = $field->get('type');
-                        if (isset($drivers[$type])) {
-                            $drivers[$type]->setField($field);
-                            $data = $drivers[$type]->import($value, $entryID);
-                        } else {
-                            $drivers['default']->setField($field);
-                            $data = $drivers['default']->import($value, $entryID);
-                        }
-                        // Set the data:
-                        if ($data != false) {
-                            $entry->setData($fieldID, $data);
+                        // If $fieldID = 0, then `Don't use` is selected as field. So don't use it! :-P
+                        if($fieldID != 0)
+                        {
+                            $field = $fm->fetch($fieldID);
+                            // Get the corresponding field-type:
+                            $type = $field->get('type');
+                            if (isset($drivers[$type])) {
+                                $drivers[$type]->setField($field);
+                                $data = $drivers[$type]->import($value, $entryID);
+                            } else {
+                                $drivers['default']->setField($field);
+                                $data = $drivers['default']->import($value, $entryID);
+                            }
+                            // Set the data:
+                            if ($data != false) {
+                                $entry->setData($fieldID, $data);
+                            }
                         }
                         $j++;
                     }
