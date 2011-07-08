@@ -66,7 +66,7 @@ function importRows(nr)
             jQuery("div.progress div.bar").text('Elapsed time: ' + e + ' / Estimated time left: ' + eta);
 
             // Check if the next entry should be imported:
-            if(((currentRow + 1) * 10) < totalEntries - 1)
+            if(((currentRow + 1) * 10) < totalEntries)
             {
                 importRows(currentRow + 1);
             } else {
