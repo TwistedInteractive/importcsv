@@ -1,10 +1,10 @@
 <?php
 
 /*
- * Import Driver for type: upload
+ * Import Driver for type: private_upload
  */
 
-class ImportDriver_upload extends ImportDriver_default
+class ImportDriver_private_upload extends ImportDriver_default
 {
 
 
@@ -12,9 +12,9 @@ class ImportDriver_upload extends ImportDriver_default
      * Constructor
      * @return void
      */
-    public function ImportDriver_upload()
+    public function ImportDriver_private_upload()
     {
-        $this->type = 'upload';
+        $this->type = 'private_upload';
     }
 
     /**
@@ -28,17 +28,21 @@ class ImportDriver_upload extends ImportDriver_default
         $destination = $this->field->get('destination');
         $filename = str_replace('/workspace/', '/', $destination) . '/' . str_replace($destination, '', $value);
         // Check if the file exists:
-        if (file_exists(DOCROOT . $destination . '/' . $value)) {
+        if (file_exists($destination . '/' . $value)) {
             // File exists, create the link:
             // Check if there already exists an entry with this filename. If so, this entry will not be stored (filename must be unique)
             $sql = 'SELECT COUNT(*) AS `total` FROM `tbl_entries_data_' . $this->field->get('id') . '` WHERE `file` = \'' . $filename . '\';';
             $total = Symphony::Database()->fetchVar('total', 0, $sql);
+            // echo $filename.': '.$total.'<br />';
+            // echo $total;
             if ($total == 0) {
+                // echo $total;
                 $fileData = $this->field->processRawFieldData($value, $this->field->__OK__);
                 $fileData['file'] = $filename;
-                $fileData['size'] = filesize(DOCROOT . $destination . '/' . $value);
-                $fileData['mimetype'] = mime_content_type(DOCROOT . $destination . '/' . $value);
-                $fileData['meta'] = serialize($this->field->getMetaInfo(DOCROOT . $destination . '/' . $value, $fileData['mimetype']));
+                $fileData['size'] = filesize($destination . '/' . $value);
+                $fileData['mimetype'] = mime_content_type($destination . '/' . $value);
+                $fileData['meta'] = serialize($this->field->getMetaInfo($destination . '/' . $value, $fileData['mimetype']));
+                // $entry->setData($associatedFieldID, $fileData);
                 return $fileData;
             } else {
                 // File already exists, don't store:
@@ -50,9 +54,9 @@ class ImportDriver_upload extends ImportDriver_default
             {
                 $fileData = $this->field->processRawFieldData($value, $this->field->__OK__);
                 $fileData['file'] = $filename;
-                $fileData['size'] = filesize(DOCROOT . $destination . '/' . $value);
-                $fileData['mimetype'] = ''; // mime_content_type(DOCROOT . $destination . '/' . $value);
-                $fileData['meta'] = serialize($this->field->getMetaInfo(DOCROOT . $destination . '/' . $value, $fileData['mimetype']));
+                $fileData['size'] = 0;
+                $fileData['mimetype'] = ''; // mime_content_type($destination . '/' . $value);
+                $fileData['meta'] = serialize($this->field->getMetaInfo($destination . '/' . $value, $fileData['mimetype']));
                 return $fileData;
             }
         }
