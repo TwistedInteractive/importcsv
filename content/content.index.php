@@ -76,9 +76,8 @@ class contentExtensionImportcsvIndex extends AdministrationPage
     private function __getCSV()
     {
         $cache = new Cacheable(Symphony::Database());
-        $data  = $cache->check('importcsv');
-        if($data != false)
-        {
+        $data = $cache->check('importcsv');
+        if ($data != false) {
             return unserialize($data['data']);
         } else {
             return false;
@@ -159,7 +158,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $ids = array();
         foreach ($csvTitles as $title)
         {
-            $ids[] = $_POST['field-'. $i];
+            $ids[] = $_POST['field-' . $i];
             $i++;
         }
         $this->__addVar('field-ids', implode(',', $ids));
@@ -203,8 +202,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $ignored = array();
 
         $csv = $this->__getCSV();
-        if($csv != false)
-        {
+        if ($csv != false) {
             // Load the drivers:
             $drivers = $this->getDrivers();
 
@@ -219,6 +217,9 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             // Load the fieldmanager:
             $fm = new FieldManager($this);
 
+            // Load the entrymanager:
+            $em = new EntryManager($this);
+
             // Load the CSV data of the specific rows:
             $csvTitles = $csv->titles;
             $csvData = $csv->data;
@@ -227,21 +228,21 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                 // Start by creating a new entry:
                 $entry = new Entry($this);
                 $entry->set('section_id', $sectionID);
-                
+
+                // Ignore this entry?
+                $ignore = false;
+
                 // Import this row:
                 $row = $csvData[$i];
-                if($row != false)
-                {
+                if ($row != false) {
 
                     // If a unique field is used, make sure there is a field selected for this:
-                    if($uniqueField != 'no' && $fieldIDs[$uniqueField] == 0)
-                    {
+                    if ($uniqueField != 'no' && $fieldIDs[$uniqueField] == 0) {
                         die(__('[ERROR: No field id sent for: "' . $csvTitles[$uniqueField] . '"]'));
                     }
 
                     // Unique action:
-                    if($uniqueField != 'no')
-                    {
+                    if ($uniqueField != 'no') {
                         // Check if there is an entry with this value:
                         $field = $fm->fetch($fieldIDs[$uniqueField]);
                         $type = $field->get('type');
@@ -259,63 +260,63 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                             {
                                 case 'update' :
                                     {
-                                    $entry->set('id', $entryID);
+                                    $a = $em->fetch($entryID);
+                                    $entry = $a[0];
                                     $updated[] = $entryID;
                                     break;
                                     }
                                 case 'ignore' :
                                     {
                                     $ignored[] = $entryID;
+                                    $ignore = true;
                                     break;
                                     }
                             }
                         }
                     }
 
-                    // Do the actual importing:
-                    $j = 0;
-                    foreach ($row as $value)
-                    {
-                        // When no unique field is found, treat it like a new entry
-                        // Otherwise, stop processing to safe CPU power.
-                        $fieldID = intval($fieldIDs[$j]);
-                        // If $fieldID = 0, then `Don't use` is selected as field. So don't use it! :-P
-                        if($fieldID != 0)
+                    if (!$ignore) {
+                        // Do the actual importing:
+                        $j = 0;
+                        foreach ($row as $value)
                         {
-                            $field = $fm->fetch($fieldID);
-                            // Get the corresponding field-type:
-                            $type = $field->get('type');
-                            if (isset($drivers[$type])) {
-                                $drivers[$type]->setField($field);
-                                $data = $drivers[$type]->import($value, $entryID);
-                            } else {
-                                $drivers['default']->setField($field);
-                                $data = $drivers['default']->import($value, $entryID);
+                            // When no unique field is found, treat it like a new entry
+                            // Otherwise, stop processing to safe CPU power.
+                            $fieldID = intval($fieldIDs[$j]);
+                            // If $fieldID = 0, then `Don't use` is selected as field. So don't use it! :-P
+                            if ($fieldID != 0) {
+                                $field = $fm->fetch($fieldID);
+                                // Get the corresponding field-type:
+                                $type = $field->get('type');
+                                if (isset($drivers[$type])) {
+                                    $drivers[$type]->setField($field);
+                                    $data = $drivers[$type]->import($value, $entryID);
+                                } else {
+                                    $drivers['default']->setField($field);
+                                    $data = $drivers['default']->import($value, $entryID);
+                                }
+                                // Set the data:
+                                if ($data != false) {
+                                    $entry->setData($fieldID, $data);
+                                }
                             }
-                            // Set the data:
-                            if ($data != false) {
-                                $entry->setData($fieldID, $data);
-                            }
+                            $j++;
                         }
-                        $j++;
+
+                        // Store the entry:
+                        $entry->commit();
                     }
-
-                    // Store the entry:
-                    $entry->commit();
-
                 }
             }
         } else {
             die(__('[ERROR: CSV Data not found!]'));
         }
 
-        if(count($updated) > 0)
-        {
-            $messageSuffix .= ' '.__('(updated: ').implode(', ', $updated).')';
+        if (count($updated) > 0) {
+            $messageSuffix .= ' ' . __('(updated: ') . implode(', ', $updated) . ')';
         }
-        if(count($ignored) > 0)
-        {
-            $messageSuffix .= ' '.__('(ignored: ').implode(', ', $updated).')';
+        if (count($ignored) > 0) {
+            $messageSuffix .= ' ' . __('(ignored: ') . implode(', ', $updated) . ')';
         }
 
         die('[OK]' . $messageSuffix);
