@@ -48,7 +48,7 @@ class ImportDriver_default {
      */
     public function import($value, $entry_id = null)
     {
-        $data = $this->field->processRawFieldData($value, $this->field->__OK__, false, $entry_id);
+        $data = $this->field->processRawFieldData(trim($value), $this->field->__OK__, false, $entry_id);
         return $data;
     }
 
@@ -62,7 +62,7 @@ class ImportDriver_default {
     {
         if(isset($data['value']))
         {
-            return $data['value'];
+            return trim($data['value']);
         } else {
             return '';
         }

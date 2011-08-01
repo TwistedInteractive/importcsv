@@ -25,7 +25,7 @@ class ImportDriver_memberpassword extends ImportDriver_default {
     {
         $data = $this->field->processRawFieldData($value, $this->field->__OK__);
         // Reset the value, to prevent double md5:
-        $data['password'] = $value;
+        $data['password'] = trim($value);
         return $data;
     }
 
@@ -37,7 +37,7 @@ class ImportDriver_memberpassword extends ImportDriver_default {
      */
     public function export($data, $entry_id = null)
     {
-        return $data['password'];
+        return trim($data['password']);
     }
 
 }

@@ -61,7 +61,7 @@ class ImportDriver_selectbox_link extends ImportDriver_default
             {
                 $row = Symphony::Database()->fetchRow(0, 'SELECT * FROM `tbl_entries_data_' . $related_field . '` WHERE `entry_id` = ' . $relation_id . ';');
                 if (isset($row['value'])) {
-                    $related_values[] = $row['value'];
+                    $related_values[] = trim($row['value']);
                 } else {
                     // Fallback to empty value:
                     $related_values[] = '';

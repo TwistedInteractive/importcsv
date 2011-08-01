@@ -26,16 +26,16 @@ class ImportDriver_upload extends ImportDriver_default
     public function import($value, $entry_id = null)
     {
         $destination = $this->field->get('destination');
-        $filename = str_replace('/workspace/', '/', $destination) . '/' . str_replace($destination, '', $value);
+        $filename = str_replace('/workspace/', '/', $destination) . '/' . str_replace($destination, '', trim($value));
         // Check if the file exists:
-        if (file_exists(DOCROOT . $destination . '/' . $value)) {
+        if (file_exists(DOCROOT . $destination . '/' . trim($value))) {
             // File exists, create the link:
             // Check if there already exists an entry with this filename. If so, this entry will not be stored (filename must be unique)
             $sql = 'SELECT COUNT(*) AS `total` FROM `tbl_entries_data_' . $this->field->get('id') . '` WHERE `file` = \'' . $filename . '\';';
             $total = Symphony::Database()->fetchVar('total', 0, $sql);
             if ($total == 0) {
                 $fileData = $this->field->processRawFieldData($value, $this->field->__OK__);
-                $fileData['file'] = $filename;
+                $fileData['file'] = trim($filename);
                 $fileData['size'] = filesize(DOCROOT . $destination . '/' . $value);
                 $fileData['mimetype'] = mime_content_type(DOCROOT . $destination . '/' . $value);
                 $fileData['meta'] = serialize($this->field->getMetaInfo(DOCROOT . $destination . '/' . $value, $fileData['mimetype']));
@@ -49,7 +49,7 @@ class ImportDriver_upload extends ImportDriver_default
             if(!empty($value))
             {
                 $fileData = $this->field->processRawFieldData($value, $this->field->__OK__);
-                $fileData['file'] = $filename;
+                $fileData['file'] = trim($filename);
                 $fileData['size'] = filesize(DOCROOT . $destination . '/' . $value);
                 $fileData['mimetype'] = ''; // mime_content_type(DOCROOT . $destination . '/' . $value);
                 $fileData['meta'] = serialize($this->field->getMetaInfo(DOCROOT . $destination . '/' . $value, $fileData['mimetype']));
@@ -67,7 +67,7 @@ class ImportDriver_upload extends ImportDriver_default
      */
     public function export($data, $entry_id = null)
     {
-        return ($data['file']);
+        return trim($data['file']);
     }
 
 }
