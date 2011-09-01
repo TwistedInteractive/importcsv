@@ -20,8 +20,9 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
     public function build()
     {
-        parent::addStylesheetToHead(URL . '/extensions/importcsv/assets/importcsv.css', 'screen', 70);
-        parent::addStylesheetToHead(URL . '/symphony/assets/forms.css', 'screen', 70);
+        parent::addStylesheetToHead(URL . '/extensions/importcsv/assets/importcsv.css');
+        parent::addStylesheetToHead(URL . '/symphony/assets/forms.css');
+        parent::addScriptToHead(URL.'/extensions/importcsv/assets/importcsv.js', 70);
         parent::build();
     }
 
@@ -39,8 +40,13 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             $this->__exportPage();
         } elseif (isset($_POST['ajax'])) {
             // Ajax import:
-            // $this->__ajaxImport();
             $this->__ajaxImportRows();
+        } elseif (isset($_POST['multilanguage-export'])) {
+            // Export multilanguage field:
+            $this->__exportMultiLanguage();
+        } elseif (isset($_POST['multilanguage-import'])) {
+            // Import multilanguage field:
+            $this->__importMultiLanguage();
         } else {
             // Startpage:
             $this->__indexPage();
@@ -60,6 +66,27 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             $sectionsNode->appendChild(new XMLElement('section', $section->get('name'), array('id' => $section->get('id'))));
         }
         $xml->appendChild($sectionsNode);
+
+        // Check if the multilingual-field extension is installed:
+        $em = new ExtensionManager();
+        $status = $em->fetchStatus('multilingual_field');
+        if($status == EXTENSION_ENABLED)
+        {
+            $xml->setAttribute('multilanguage', 'yes');
+            // Get all the multilanguage fields:
+            $fm = new FieldManager($this);
+            $fields = $fm->fetch(null, null, 'ASC', 'sortorder', 'multilingual');
+            $multilanguage = new XMLElement('multilanguage');
+            foreach($fields as $field)
+            {
+                $sectionID = $field->get('parent_section');
+                $section   = $sm->fetch($sectionID);
+                $id        = $field->get('id');
+                $label     = $section->get('name').' : '.$field->get('label');
+                $multilanguage->appendChild(new XMLElement('field', $label, array('id'=>$id)));
+            }
+            $xml->appendChild($multilanguage);
+        }
 
         // Generate the HTML:
         $xslt = new XSLTPage();
@@ -368,6 +395,113 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             echo implode(';', $line) . "\r\n";
         }
         die();
+    }
+
+    private function __exportMultiLanguage()
+    {
+        // Get the ID of the field which values should be exported:
+        $fieldID = $_REQUEST['multilanguage-field'];
+
+        // Get the languages:
+        $supported_language_codes = $this->__getLanguages();
+
+        // Create the CSV Headers:
+        $csv = '"entry_id"';
+        foreach($supported_language_codes as $code)
+        {
+            $csv .= ';"'.$code.'"';
+        }
+        $csv .= "\r\n";
+
+        // Get the data of the field:
+        $data    = Symphony::Database()->fetch('SELECT * FROM `tbl_entries_data_'.$fieldID.'`;');
+
+        // Loop through the data:
+        foreach($data as $row)
+        {
+            $entryID = $row['entry_id'];
+            $csv .= '"'.$entryID.'"';
+            foreach($supported_language_codes as $code)
+            {
+                $csv .= ';"'.str_replace('"', '""', $row['value-'.$code]).'"';
+            }
+            $csv .= "\r\n";
+        }
+
+        // Output the CSV:
+        $fm = new FieldManager($this);
+        $sm = new SectionManager($this);
+        $field = $fm->fetch($fieldID);
+        $section   = $sm->fetch($field->get('parent_section'));
+
+        $fileName = 'export-'.strtolower($section->get('handle').'-'.$field->get('element_name')).'.csv';
+        header('Content-type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $fileName . '"');
+
+        echo $csv;
+        die();
+    }
+
+    private function __getLanguages()
+    {
+        // Get the available languages:
+        $supported_language_codes = explode(',', General::sanitize(Symphony::Configuration()->get('language_codes', 'language_redirect')));
+        $supported_language_codes = array_map('trim', $supported_language_codes);
+        $supported_language_codes = array_filter($supported_language_codes);
+        return $supported_language_codes;
+    }
+
+    private function __importMultilanguage()
+    {
+        // Get the ID of the field which values should be imported:
+        $fieldID = $_REQUEST['multilanguage-field'];
+
+        // Get the nodes provided by this CSV file:
+        $csv = new parseCSV();
+        $csv->auto($_FILES['csv-file']['tmp_name']);
+
+        // Get the CSV Data:
+        $csvData = $csv->data;
+
+        // Get the languages:
+        $supported_language_codes = $this->__getLanguages();
+
+        // Itterate throught each row:
+        $count = 0;
+        foreach($csvData as $row)
+        {
+            if(isset($row['entry_id']))
+            {
+                $data = array();
+                $first = true;
+                // Itterate according to the languages that are available, not the ones that are defined in the CSV:
+                foreach($supported_language_codes as $code)
+                {
+                    // Check if this language code exists in the CSV data:
+                    if(isset($row[$code]))
+                    {
+                        // The first language in the CSV data is used as the default language:
+                        if($first)
+                        {
+                            $data['handle'] = General::createHandle($row[$code]);
+                            $data['value']  = $row[$code];
+                        }
+                        // Store the value for this specific language:
+                        $data['handle-'.$code]          = General::createHandle($row[$code]);
+                        $data['value-'.$code]           = $row[$code];
+                        $data['value_format-'.$code]    = $row[$code];
+                        $data['word_count-'.$code]      = substr_count($row[$code], ' ') + 1;
+                        $first = false;
+                    }
+                }
+                // Update the data in the database:
+                Symphony::Database()->update($data, 'tbl_entries_data_'.$fieldID, '`entry_id` = '.trim($row['entry_id']));
+                $count++;
+            }
+        }
+
+        // Show the message that the import was successfull.
+        $this->Form->appendChild(new XMLElement('p', __('Import successfull: ').$count.' '.__('entries updated')));
     }
 
 }

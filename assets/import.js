@@ -30,6 +30,7 @@ jQuery(function($){
     {
         importRows(0);
     }
+
 });
 
 /**
