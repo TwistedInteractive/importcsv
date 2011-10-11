@@ -43,9 +43,14 @@ class ImportDriver_select extends ImportDriver_default {
     {
         if(is_array($data['value']))
         {
-            return implode(', ', $data['value']);
+            $newData = array();
+            foreach($data['value'] as $value)
+            {
+                $newData[] = trim($value);
+            }
+            return implode(', ', $newData);
         } else {
-            return $data['value'];
+            return trim($data['value']);
         }
     }
 

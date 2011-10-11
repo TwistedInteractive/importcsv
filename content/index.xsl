@@ -69,13 +69,13 @@
                     <h3>Import CSV</h3>
                     <p>Select a CSV file to upload:</p>
                     <label>
-                        <input name="csv-file" type="file"/>
+                        <input name="csv-file-ml" type="file"/>
                     </label>
                     <p>
                         Please choose the field you wish to import into:
                     </p>
                     <label>
-                        <select name="multilanguage-field" class="small">
+                        <select name="multilanguage-field-import" class="small">
                             <xsl:for-each select="data/multilanguage/field">
                                 <xsl:sort select="." />
                                 <option value="{@id}">
@@ -92,7 +92,7 @@
                         Please choose the field you wish to export to a CSV file:
                     </p>
                     <label>
-                        <select name="multilanguage-field" class="small">
+                        <select name="multilanguage-field-export" class="small">
                             <xsl:for-each select="data/multilanguage/field">
                                 <xsl:sort select="." />
                                 <option value="{@id}">

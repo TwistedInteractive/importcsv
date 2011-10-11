@@ -44,7 +44,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         } elseif (isset($_POST['multilanguage-export'])) {
             // Export multilanguage field:
             $this->__exportMultiLanguage();
-        } elseif (isset($_POST['multilanguage-import'])) {
+        } elseif (isset($_POST['multilanguage-import']) && $_FILES['csv-file-ml']['name'] != '') {
             // Import multilanguage field:
             $this->__importMultiLanguage();
         } else {
@@ -375,24 +375,28 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         echo implode(';', $headers) . "\n";
 
         // Show the content:
-        $entries = $em->fetch(null, $sectionID);
-        foreach ($entries as $entry)
+        $total = $em->fetchCount($sectionID);
+        for($offset = 0; $offset < $total; $offset += 100)
         {
-            $line = array();
-            foreach ($fields as $field)
+            $entries = $em->fetch(null, $sectionID, 100, $offset);
+            foreach ($entries as $entry)
             {
-                $data = $entry->getData($field->get('id'));
-                $type = $field->get('type');
-                if (isset($drivers[$type])) {
-                    $drivers[$type]->setField($field);
-                    $value = $drivers[$type]->export($data, $entry->get('id'));
-                } else {
-                    $drivers['default']->setField($field);
-                    $value = $drivers['default']->export($data, $entry->get('id'));
+                $line = array();
+                foreach ($fields as $field)
+                {
+                    $data = $entry->getData($field->get('id'));
+                    $type = $field->get('type');
+                    if (isset($drivers[$type])) {
+                        $drivers[$type]->setField($field);
+                        $value = $drivers[$type]->export($data, $entry->get('id'));
+                    } else {
+                        $drivers['default']->setField($field);
+                        $value = $drivers['default']->export($data, $entry->get('id'));
+                    }
+                    $line[] = '"' . str_replace('"', '""', trim($value)) . '"';
                 }
-                $line[] = '"' . str_replace('"', '""', $value) . '"';
+                echo implode(';', $line) . "\r\n";
             }
-            echo implode(';', $line) . "\r\n";
         }
         die();
     }
@@ -400,7 +404,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
     private function __exportMultiLanguage()
     {
         // Get the ID of the field which values should be exported:
-        $fieldID = $_REQUEST['multilanguage-field'];
+        $fieldID = $_REQUEST['multilanguage-field-export'];
 
         // Get the languages:
         $supported_language_codes = $this->__getLanguages();
@@ -454,11 +458,11 @@ class contentExtensionImportcsvIndex extends AdministrationPage
     private function __importMultilanguage()
     {
         // Get the ID of the field which values should be imported:
-        $fieldID = $_REQUEST['multilanguage-field'];
+        $fieldID = $_REQUEST['multilanguage-field-import'];
 
         // Get the nodes provided by this CSV file:
         $csv = new parseCSV();
-        $csv->auto($_FILES['csv-file']['tmp_name']);
+        $csv->auto($_FILES['csv-file-ml']['tmp_name']);
 
         // Get the CSV Data:
         $csvData = $csv->data;
@@ -484,7 +488,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                         if($first)
                         {
                             $data['handle'] = General::createHandle($row[$code]);
-                            $data['value']  = $row[$code];
+                            $data['value']  = General::sanitize($row[$code]);
                         }
                         // Store the value for this specific language:
                         $data['handle-'.$code]          = General::createHandle($row[$code]);
@@ -502,6 +506,9 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         // Show the message that the import was successfull.
         $this->Form->appendChild(new XMLElement('p', __('Import successfull: ').$count.' '.__('entries updated')));
+        $p = new XMLElement('p');
+        $p->appendChild(new XMLElement('a', __('Import another field'), array('href'=>'?#multi')));
+        $this->Form->appendChild($p);
     }
 
 }
