@@ -416,15 +416,11 @@ class contentExtensionImportcsvIndex extends AdministrationPage
          */
          
         // Show the content:
-/*<<<<<<< HEAD
-        $entries = $em->fetch(null , $sectionID,null,null,$where,$joins);
-        foreach ($entries as $entry)
-=======*/
-        $total = $em->fetchCount($sectionID,$where,$joints);
+        $total = $em->fetchCount($sectionID,$where,$joins);
         for($offset = 0; $offset < $total; $offset += 100)
-//>>>>>>> upstream/master
+
         {
-            $entries = $em->fetch(null, $sectionID, 100, $offset,$where,$joints);
+            $entries = $em->fetch(null, $sectionID, 100, $offset, $where, $joins);
             foreach ($entries as $entry)
             {
                 $line = array();
