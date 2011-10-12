@@ -424,7 +424,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         for($offset = 0; $offset < $total; $offset += 100)
 //>>>>>>> upstream/master
         {
-            $entries = $em->fetch(null, $sectionID, 100, $offset);
+            $entries = $em->fetch(null, $sectionID, 100, $offset,$where,$joints);
             foreach ($entries as $entry)
             {
                 $line = array();
