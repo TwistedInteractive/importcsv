@@ -6,4 +6,9 @@ jQuery(function($){
         $("div."+$(this).attr("rel")).show();
         return false;
     });
+
+    if(window.location.hash.replace('#', '') == 'multi')
+    {
+        $("ul.importer-nav a[rel=multilanguage]").click();
+    }
 });
