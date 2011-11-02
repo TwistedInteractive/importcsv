@@ -62,7 +62,12 @@ class ImportDriver_default {
     {
         if(isset($data['value']))
         {
-            return trim($data['value']);
+            if(!is_array($data['value']))
+            {
+                return trim($data['value']);
+            } else {
+                return trim(implode(array_filter($data['value'])));
+            }
         } else {
             return '';
         }
