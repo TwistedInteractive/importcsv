@@ -373,12 +373,54 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         // Show the headers:
         echo implode(';', $headers) . "\n";
+        
+         /*
+         * Enable filtering!
+         * Use the same filtering as with publish indexes (ie: ?filter=[field]:value)
+         */
+        $filter = $filter_value = $where = $joins = NULL;
+        if (isset($_REQUEST['filter'])) {
 
+            list($field_handle , $filter_value) = explode(':' , $_REQUEST['filter'] , 2);
+
+            $field_names = explode(',' , $field_handle);
+
+            foreach ($field_names as $field_name) {
+
+                $filter_value = rawurldecode($filter_value);
+
+                $filter = Symphony::Database()->fetchVar('id' , 0 , "SELECT `f`.`id`
+										  FROM `tbl_fields` AS `f`, `tbl_sections` AS `s`
+										  WHERE `s`.`id` = `f`.`parent_section`
+										  AND f.`element_name` = '$field_name'
+										  AND `s`.`handle` = '" . $section->get('handle') . "' LIMIT 1");
+                $field =& $em->fieldManager->fetch($filter);
+
+                if ($field instanceof Field) {
+                    // For deprecated reasons, call the old, typo'd function name until the switch to the
+                    // properly named buildDSRetrievalSQL function.
+                    $field->buildDSRetrivalSQL(array($filter_value) , $joins , $where , false);
+                    $filter_value = rawurlencode($filter_value);
+                }
+            }
+
+            if (!is_null($where)) {
+                $where = str_replace('AND' , 'OR' , $where); // multiple fields need to be OR
+                $where = trim($where);
+                $where = ' AND (' . substr($where , 2 , strlen($where)) . ')'; // replace leading OR with AND
+            }
+
+        }
+        /*
+         * End
+         */
+         
         // Show the content:
-        $total = $em->fetchCount($sectionID);
+        $total = $em->fetchCount($sectionID,$where,$joins);
         for($offset = 0; $offset < $total; $offset += 100)
+
         {
-            $entries = $em->fetch(null, $sectionID, 100, $offset);
+            $entries = $em->fetch(null, $sectionID, 100, $offset, $where, $joins);
             foreach ($entries as $entry)
             {
                 $line = array();
