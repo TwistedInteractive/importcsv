@@ -10,7 +10,7 @@ var fieldIDs;
 jQuery(function($){
     // Window resize function (for adjusting the height of the console):
     $(window).resize(function(){
-        $("div.console").height($(window).height() - 250);
+        $("div.console").height($(window).height() - 350);
     }).resize();
 
     put('Initializing...');

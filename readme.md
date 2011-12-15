@@ -1,7 +1,7 @@
 # Import / export CSV #
 
-Version: 0.2.3
-Release date: 2011-08-31
+Version: 0.3
+Release date: 2011-12-15
 Author: Giel Berkers  
 Website: http://www.gielberkers.com
 E-mail: info@gielberkers.com

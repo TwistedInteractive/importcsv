@@ -11,19 +11,22 @@ require_once(CORE . '/class.cacheable.php');
 class contentExtensionImportcsvIndex extends AdministrationPage
 {
 
-    public function __construct(&$parent)
+/*    public function __construct(&$parent)
     {
         parent::__construct($parent);
-        $this->setTitle('Symphony - Import / export CSV');
+
     }
+*/
 
 
     public function build()
     {
-        parent::addStylesheetToHead(URL . '/extensions/importcsv/assets/importcsv.css');
-        parent::addStylesheetToHead(URL . '/symphony/assets/forms.css');
-        parent::addScriptToHead(URL.'/extensions/importcsv/assets/importcsv.js', 70);
         parent::build();
+        parent::addStylesheetToHead(URL . '/extensions/importcsv/assets/importcsv.css');
+        // parent::addStylesheetToHead(URL . '/symphony/assets/forms.css');
+        parent::addScriptToHead(URL.'/extensions/importcsv/assets/importcsv.js', 70);
+        $this->setTitle('Symphony - Import / export CSV');
+        $this->Context->appendChild(new XMLElement('h2', __('Import / Export CSV')));
     }
 
 

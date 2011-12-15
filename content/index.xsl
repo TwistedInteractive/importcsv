@@ -2,17 +2,21 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
     <xsl:template match="/">
+<!--
         <h2>Import / Export CSV</h2>
-        <ul class="importer-nav">
-            <li>
-                <a href="#" rel="regular" class="active">Regular import/export</a>
-            </li>
-            <xsl:if test="data/@multilanguage">
+-->
+        <xsl:if test="data/@multilanguage">
+            <ul class="importer-nav">
                 <li>
-                    <a href="#" rel="multilanguage">Multilingual field import/export</a>
+                    <a href="#" rel="regular" class="active">Regular import/export</a>
                 </li>
-            </xsl:if>
-        </ul>
+                <xsl:if test="data/@multilanguage">
+                    <li>
+                        <a href="#" rel="multilanguage">Multilingual field import/export</a>
+                    </li>
+                </xsl:if>
+            </ul>
+        </xsl:if>
         <div class="regular importer">
             <p>This is the default import/export tool. It allows you to import and export entire sections.</p>
             <fieldset class="left">
