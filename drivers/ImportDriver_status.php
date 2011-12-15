@@ -38,7 +38,7 @@ class ImportDriver_status extends ImportDriver_default {
     {
         if($entry_id != null)
         {
-            return Symphony::Database()->fetchVar('status', 0, 'SELECT `status` FROM `tbl_fields_status_statusses` WHERE `field_id` = '.$this->field->get('id').' AND `entry_id` = '.$entry_id.' ORDER BY `date` DESC, `id` DESC;');
+            return Symphony::Database()->fetchVar('status', 0, 'SELECT `status` FROM `tbl_fields_status_statuses` WHERE `field_id` = '.$this->field->get('id').' AND `entry_id` = '.$entry_id.' ORDER BY `date` DESC, `id` DESC;');
         }
         if(isset($data['value']))
         {
