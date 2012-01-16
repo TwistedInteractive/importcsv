@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<extension id="frontend_debug" xmlns="http://symphony-cms.com/schemas/extension/1.0">
+	<name>Frontend Debugger Container</name>
+	<description>Adds the debugger to the frontend of your website as a new panel.</description>
+	<repo type="github">https://github.com/kanduvisla/frontend_debug</repo>
+    <types>
+        <type>Workflow</type>
+        <type>Other</type>
+    </types>
+	<authors>
+		<author>
+			<name github="kanduvisla" symphony="kanduvisla">Giel Berkers</name>
+            <email>info@gielberkers.com</email>
+            <website>http://www.gielberkers.com</website>
+		</author>
+	</authors>
+	<releases>
+        <release version="1.2" date="2011-12-16" min="2.3"/>
+		<release version="1.1" date="2010-09-21" min="2.2.x"/>
+	</releases>
+</extension>
