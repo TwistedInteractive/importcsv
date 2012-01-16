@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<extension id="frontend_debug" xmlns="http://symphony-cms.com/schemas/extension/1.0">
-	<name>Frontend Debugger Container</name>
-	<description>Adds the debugger to the frontend of your website as a new panel.</description>
-	<repo type="github">https://github.com/kanduvisla/frontend_debug</repo>
+<extension id="importcsv" xmlns="http://symphony-cms.com/schemas/extension/1.0">
+	<name>Import/Export CSV</name>
+	<description>Import a CSV file to create new entries for a certain section, or export an existing section to a CSV file.</description>
+	<repo type="github">https://github.com/kanduvisla/importcsv</repo>
     <types>
         <type>Workflow</type>
         <type>Other</type>
@@ -15,7 +15,7 @@
 		</author>
 	</authors>
 	<releases>
-        <release version="1.2" date="2011-12-16" min="2.3"/>
-		<release version="1.1" date="2010-09-21" min="2.2.x"/>
+        <release version="0.3" date="2011-12-15" min="2.3"/>
+		<release version="0.2.3" date="2011-08-31" min="2.2.x"/>
 	</releases>
 </extension>
