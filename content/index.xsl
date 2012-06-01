@@ -58,7 +58,7 @@
                     /symphony/extension/importcsv/?export&amp;section-export=9</code>, where
                     <code>section-export</code>
                     is the ID of the section you wish to export. In combination with the
-                    <a href="https://github.com/makenosound/publish_shortcuts">publish shortcuts extension</a>
+                    <a href="http://symphonyextensions.com/extensions/publish_shortcuts/">publish shortcuts extension</a>
                     this can be a great addition to your clients' site.
                 </p>
             </fieldset>
