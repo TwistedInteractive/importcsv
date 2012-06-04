@@ -54,12 +54,12 @@
                 <p>
                     <br/>
                     <strong>Tip:</strong>
-                    You can also create a direct link to export a certain section by creating a link like<code>
+                    You can also create a direct link to export a certain section by creating a link such as<code>
                     /symphony/extension/importcsv/?export&amp;section-export=9</code>, where
-                    <code>section-export</code>
-                    is the ID of the section you wish to export. In combination with the
-                    <a href="https://github.com/makenosound/publish_shortcuts">publish shortcuts extension</a>
-                    this can be a great addition to your clients' site.
+                    <code>9</code>
+                    is the ID number of the section you wish to export. In combination with the
+                    <a href="http://symphonyextensions.com/extensions/publish_shortcuts/">publish shortcuts extension</a>
+                    this can be a great addition to your clients' sites.
                 </p>
             </fieldset>
         </div>
