@@ -31,7 +31,7 @@ class ImportDriver_selectbox_link extends ImportDriver_default
         $related_ids = array('relation_id'=>array());
         foreach ($data as $relationValue)
         {
-            $related_ids['relation_id'][] = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_' . $related_field . '` WHERE `value` = \'' . trim($relationValue) . '\';');
+            $related_ids['relation_id'][] = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_' . $related_field . '` WHERE `value` = \'' . Symphony::Database()->cleanValue(trim($relationValue)) . '\';');
         }
         return $related_ids;
     }
