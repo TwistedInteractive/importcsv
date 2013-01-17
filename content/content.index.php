@@ -71,9 +71,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $xml->appendChild($sectionsNode);
 
         // Check if the multilingual-field extension is installed:
-        $em = new ExtensionManager();
-        $status = $em->fetchStatus('multilingual_field');
-        if($status == EXTENSION_ENABLED)
+        if(in_array('multilingual_field', ExtensionManager::listInstalledHandles()))
         {
             $xml->setAttribute('multilanguage', 'yes');
             // Get all the multilanguage fields:
