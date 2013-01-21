@@ -23,7 +23,7 @@ Class extension_importcsv extends Extension
 		{
 			return array(
 				array(
-					'location'	=> 'System',
+					'location'	=> __('System'),
 					'name'		=> __('Import / Export CSV'),
 					'link'		=> '/'
 				)
