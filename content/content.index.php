@@ -374,7 +374,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         // Show the headers:
         echo implode(';', $headers) . "\n";
-        
+
          /*
          * Enable filtering!
          * Use the same filtering as with publish indexes (ie: ?filter=[field]:value)
@@ -395,7 +395,8 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 										  WHERE `s`.`id` = `f`.`parent_section`
 										  AND f.`element_name` = '$field_name'
 										  AND `s`.`handle` = '" . $section->get('handle') . "' LIMIT 1");
-                $field =& $em->fieldManager->fetch($filter);
+
+                $field = FieldManager::fetch($filter);
 
                 if ($field instanceof Field) {
                     // For deprecated reasons, call the old, typo'd function name until the switch to the
@@ -415,7 +416,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         /*
          * End
          */
-         
+
         // Show the content:
         $total = $em->fetchCount($sectionID,$where,$joins);
         for($offset = 0; $offset < $total; $offset += 100)
