@@ -458,7 +458,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $csv = '"entry_id"';
         foreach($supported_language_codes as $code)
         {
-            $csv .= ';"'.$code.'"';
+            $csv .= ',"'.$code.'"';
         }
         $csv .= "\r\n";
 
@@ -472,7 +472,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             $csv .= '"'.$entryID.'"';
             foreach($supported_language_codes as $code)
             {
-                $csv .= ';"'.str_replace('"', '""', $row['value-'.$code]).'"';
+                $csv .= ',"'.str_replace('"', '""', $row['value-'.$code]).'"';
             }
             $csv .= "\r\n";
         }
