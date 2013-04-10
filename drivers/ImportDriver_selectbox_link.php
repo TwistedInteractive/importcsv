@@ -17,6 +17,19 @@ class ImportDriver_selectbox_link extends ImportDriver_default
     }
 
     /**
+     * Returns related Field ID for this Reference Link
+     * @todo This only handles a Reference Link that links to one section
+     * @return integer
+     */
+    private function getRelatedField()
+	{
+        // Get the correct ID of the related fields
+        $related_field = Symphony::Database()->fetchVar('related_field_id', 0, 'SELECT `related_field_id` FROM `tbl_fields_selectbox_link` WHERE `field_id` = ' . $this->field->get('id'));
+
+        return $related_field;
+    }
+
+    /**
      * Process the data so it can be imported into the entry.
      * @param  $value   The value to import
      * @param  $entry_id    If a duplicate is found, an entry ID will be provided.
@@ -25,13 +38,19 @@ class ImportDriver_selectbox_link extends ImportDriver_default
     public function import($value, $entry_id = null)
     {
         // Import selectbox link:
-        // Get the correct ID of the related fields
-        $related_field = Symphony::Database()->fetchVar('related_field_id', 0, 'SELECT `related_field_id` FROM `tbl_fields_selectbox_link` WHERE `field_id` = ' . $this->field->get('id'));
+        $related_field_id = $this->getRelatedField();
         $data = explode(',', $value);
         $related_ids = array('relation_id'=>array());
         foreach ($data as $relationValue)
         {
-            $related_ids['relation_id'][] = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_' . $related_field . '` WHERE `value` = \'' . trim($relationValue) . '\';');
+            $related_ids['relation_id'][] = Symphony::Database()->fetchVar('entry_id', 0, sprintf('
+                SELECT `entry_id`
+                FROM `tbl_entries_data_%d`
+                WHERE `value` = "%s";
+            ',
+                $related_field_id,
+                Symphony::Database()->cleanValue(trim($relationValue))
+            ));
         }
         return $related_ids;
     }
@@ -44,8 +63,7 @@ class ImportDriver_selectbox_link extends ImportDriver_default
      */
     public function export($data, $entry_id = null)
     {
-        // Get the correct values of the related field
-        $related_field = Symphony::Database()->fetchVar('related_field_id', 0, 'SELECT `related_field_id` FROM `tbl_fields_selectbox_link` WHERE `field_id` = ' . $this->field->get('id'));
+        $related_field_id = $this->getRelatedField();
         if (!is_array($data['relation_id'])) {
             $data['relation_id'] = array($data['relation_id']);
         }
@@ -54,7 +72,7 @@ class ImportDriver_selectbox_link extends ImportDriver_default
         {
             if(!empty($relation_id))
             {
-                $row = Symphony::Database()->fetchRow(0, 'SELECT * FROM `tbl_entries_data_' . $related_field . '` WHERE `entry_id` = ' . $relation_id . ';');
+                $row = Symphony::Database()->fetchRow(0, 'SELECT * FROM `tbl_entries_data_' . $related_field_id . '` WHERE `entry_id` = ' . $relation_id . ';');
                 if (isset($row['value'])) {
                     $related_values[] = trim($row['value']);
                 } else {
@@ -64,6 +82,31 @@ class ImportDriver_selectbox_link extends ImportDriver_default
             }
         }
         return implode(', ', $related_values);
+    }
+
+    /**
+     * Scan the database for a specific value
+     * @param  $value       The value to scan for
+     * @return null|string  The ID of the entry found, or null if no match is found.
+     */
+    public function scanDatabase($value)
+    {
+        $related_field_id = $this->getRelatedField();
+        $searchResult = Symphony::Database()->fetchVar('entry_id', 0, sprintf('
+            SELECT `entry_id`
+            FROM `tbl_entries_data_%d`
+            WHERE `value` = "%s";
+        ',
+            $related_field_id,
+            Symphony::Database()->cleanValue(trim($value))
+        ));
+
+        if ($searchResult != false) {
+            return $searchResult;
+        }
+        else {
+            return null;
+        }
     }
 
 }
