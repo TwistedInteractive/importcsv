@@ -85,10 +85,18 @@ class ImportDriver_default {
         foreach ($result as $tableColumn)
         {
             if ($tableColumn['Field'] == 'value') {
-                $searchResult = Symphony::Database()->fetchVar('entry_id', 0, 'SELECT `entry_id` FROM `tbl_entries_data_' . $this->field->get('id') . '` WHERE `value` = \'' . addslashes(trim($value)) . '\';');
+                $searchResult = Symphony::Database()->fetchVar('entry_id', 0, sprintf('
+                    SELECT `entry_id`
+                    FROM `tbl_entries_data_%d`
+                    WHERE `value` = "%s";
+                ',
+                    $this->field->get('id'),
+                    Symphony::Database()->cleanValue(trim($value))
+                ));
                 if ($searchResult != false) {
                     return $searchResult;
-                } else {
+                }
+                else {
                     return null;
                 }
             }
