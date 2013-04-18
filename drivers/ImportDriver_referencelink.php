@@ -113,8 +113,24 @@ class ImportDriver_referencelink extends ImportDriver_default
             Symphony::Database()->cleanValue(trim($value))
         ));
 
+        // If there is a matching result, it means the entry exists in the SBL section
+        // Now check to see if there is another entry with this value in the current section
         if ($searchResult != false) {
-            return $searchResult;
+            $existing = Symphony::Database()->fetchVar('entry_id', 0, sprintf('
+                SELECT `entry_id`
+                FROM `tbl_entries_data_%d`
+                WHERE `relation_id` = %d;
+            ',
+                $this->field->get('id'),
+                $searchResult
+            ));
+
+            if ($existing != false) {
+                return $existing;
+            }
+            else {
+                return null;
+            }
         }
         else {
             return null;
