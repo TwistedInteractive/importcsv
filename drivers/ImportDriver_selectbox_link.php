@@ -22,7 +22,7 @@ class ImportDriver_selectbox_link extends ImportDriver_default
      * @return integer
      */
     private function getRelatedField()
-	{
+    {
         // Get the correct ID of the related fields
         $related_field = Symphony::Database()->fetchVar('related_field_id', 0, 'SELECT `related_field_id` FROM `tbl_fields_selectbox_link` WHERE `field_id` = ' . $this->field->get('id'));
 
@@ -63,11 +63,12 @@ class ImportDriver_selectbox_link extends ImportDriver_default
      */
     public function export($data, $entry_id = null)
     {
-        $related_field_id = $this->getRelatedField();
         if (!is_array($data['relation_id'])) {
             $data['relation_id'] = array($data['relation_id']);
         }
+
         $related_values = array();
+        $related_field_id = $this->getRelatedField();
         foreach ($data['relation_id'] as $relation_id)
         {
             if(!empty($relation_id))
@@ -101,8 +102,24 @@ class ImportDriver_selectbox_link extends ImportDriver_default
             Symphony::Database()->cleanValue(trim($value))
         ));
 
+        // If there is a matching result, it means the entry exists in the SBL section
+        // Now check to see if there is another entry with this value in the current section
         if ($searchResult != false) {
-            return $searchResult;
+            $existing = Symphony::Database()->fetchVar('entry_id', 0, sprintf('
+                SELECT `entry_id`
+                FROM `tbl_entries_data_%d`
+                WHERE `relation_id` = %d;
+            ',
+                $this->field->get('id'),
+                $searchResult
+            ));
+
+            if ($existing != false) {
+                return $existing;
+            }
+            else {
+                return null;
+            }
         }
         else {
             return null;
