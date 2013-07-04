@@ -11,9 +11,8 @@ Class extension_importcsv extends Extension
 			'version' => '0.3',
 			'release-date' => '2011-12-15',
 			'author' => array(
-				'name' => 'Giel Berkers',
-				'website' => 'http://www.gielberkers.com',
-				'email' => 'info@gielberkers.com'),
+				'name' => 'Twisted Interactive',
+				'website' => 'http://www.twisted.nl'),
 			'description' => 'Import a CSV file to create new entries for a certain section, or export an existing section to a CSV file'
 		);
 	}
