@@ -1,6 +1,6 @@
 # Import / export CSV #
 
-Author: Twisted Interactive
+Author: Twisted Interactive  
 Website: http://www.twisted.nl
 
 Import a CSV file to create new entries for a certain section, or export an existing section to a CSV file
