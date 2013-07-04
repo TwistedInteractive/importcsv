@@ -1,10 +1,7 @@
 # Import / export CSV #
 
-Version: 0.3
-Release date: 2011-12-15
-Author: Giel Berkers  
-Website: http://www.gielberkers.com
-E-mail: info@gielberkers.com
+Author: Twisted Interactive
+Website: http://www.twisted.nl
 
 Import a CSV file to create new entries for a certain section, or export an existing section to a CSV file
 
