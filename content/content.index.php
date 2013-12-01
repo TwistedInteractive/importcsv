@@ -201,6 +201,17 @@ class contentExtensionImportcsvIndex extends AdministrationPage
     {
         $classes = glob(EXTENSIONS . '/importcsv/drivers/*.php');
         $drivers = array();
+
+        // this matching, popping grepping, and unshifting
+        // ensures that the ImportDriver_default class is the first
+        // path in the stack otherwise any driver that comes before
+        // "default" alphabetically will throw an error along
+        // the lines saying ImportDriver_default.php is undefined
+        $defaultMatch = '/ImportDriver_default\.php$/';
+        $defaultDriver = array_pop(preg_grep($defaultMatch, $classes));
+        $classes = preg_grep($defaultMatch, $classes, PREG_GREP_INVERT);
+        array_unshift($classes, $defaultDriver);
+
         foreach ($classes as $class)
         {
             include_once($class);
