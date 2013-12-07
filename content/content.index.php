@@ -349,7 +349,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             $messageSuffix .= ' ' . __('(updated: ') . implode(', ', $updated) . ')';
         }
         if (count($ignored) > 0) {
-            $messageSuffix .= ' ' . __('(ignored: ') . implode(', ', $updated) . ')';
+            $messageSuffix .= ' ' . __('(ignored: ') . implode(', ', $ignored) . ')';
         }
 
         die('[OK]' . $messageSuffix);
