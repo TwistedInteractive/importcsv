@@ -375,6 +375,9 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         header('Content-type: text/csv');
         header('Content-Disposition: attachment; filename="' . $fileName . '"');
 
+        // Declare correct separator
+        echo "sep=;\r\n";
+
         // Show the headers:
         echo implode(';', $headers) . "\n";
 
