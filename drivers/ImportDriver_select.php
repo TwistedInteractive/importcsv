@@ -29,7 +29,7 @@ class ImportDriver_select extends ImportDriver_default {
         {
             $newValues[] = trim($value);
         }
-        $data = $this->field->processRawFieldData($newValues, $this->field->__OK__);
+        $data = $this->field->processRawFieldData($newValues, Field::__OK__);
         return $data;
     }
 

@@ -36,7 +36,7 @@ class ImportDriver_multilingual extends ImportDriver_default {
                 $newValue['value-'.$code] = $dataArr[$code];
             }
         }
-        $data = $this->field->processRawFieldData($newValue, $this->field->__OK__, false, $entry_id);
+        $data = $this->field->processRawFieldData($newValue, Field::__OK__, false, $entry_id);
         return $data;
     }
 

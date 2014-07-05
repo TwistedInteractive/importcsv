@@ -37,7 +37,7 @@ class ImportDriver_private_upload extends ImportDriver_default
             // echo $total;
             if ($total == 0) {
                 // echo $total;
-                $fileData = $this->field->processRawFieldData($value, $this->field->__OK__);
+                $fileData = $this->field->processRawFieldData($value, Field::__OK__);
                 $fileData['file'] = trim($filename);
                 $fileData['size'] = filesize($destination . '/' . $value);
                 $fileData['mimetype'] = mime_content_type($destination . '/' . $value);
@@ -52,7 +52,7 @@ class ImportDriver_private_upload extends ImportDriver_default
             // File is stored in the CSV, but does not exists. Save it anyway, for database sake:
             if(!empty($value))
             {
-                $fileData = $this->field->processRawFieldData($value, $this->field->__OK__);
+                $fileData = $this->field->processRawFieldData($value, Field::__OK__);
                 $fileData['file'] = trim($filename);
                 $fileData['size'] = 0;
                 $fileData['mimetype'] = ''; // mime_content_type($destination . '/' . $value);
