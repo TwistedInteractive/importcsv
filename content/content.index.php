@@ -256,6 +256,11 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                 // Start by creating a new entry:
                 $entry = new Entry($this);
                 $entry->set('section_id', $sectionID);
+				$entry->set('creation_date', DateTimeObj::get('Y-m-d H:i:s'));
+				$entry->set('creation_date_gmt', DateTimeObj::getGMT('Y-m-d H:i:s'));
+				$entry->set('modification_date', DateTimeObj::get('Y-m-d H:i:s'));
+				$entry->set('modification_date_gmt', DateTimeObj::getGMT('Y-m-d H:i:s'));
+				$entry->set('author_id', Administration::instance()->Author->get('id'));
 
                 // Ignore this entry?
                 $ignore = false;
@@ -357,9 +362,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         // Get the fields of this section:
         $sectionID = $_REQUEST['section-export'];
-        $sm = new SectionManager($this);
-        $em = new EntryManager($this);
-        $section = $sm->fetch($sectionID);
+        $section = SectionManager::fetch($sectionID);
         $fileName = $section->get('handle') . '_' . date('Y-m-d') . '.csv';
         $fields = $section->fetchFields();
 
@@ -390,18 +393,11 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
                 $filter_value = rawurldecode($filter_value);
 
-                $filter = Symphony::Database()->fetchVar('id' , 0 , "SELECT `f`.`id`
-										  FROM `tbl_fields` AS `f`, `tbl_sections` AS `s`
-										  WHERE `s`.`id` = `f`.`parent_section`
-										  AND f.`element_name` = '$field_name'
-										  AND `s`.`handle` = '" . $section->get('handle') . "' LIMIT 1");
-
+                $filter = FieldManager::fetchFieldIDFromElementName($field_name, $section->get('id'));
                 $field = FieldManager::fetch($filter);
 
                 if ($field instanceof Field) {
-                    // For deprecated reasons, call the old, typo'd function name until the switch to the
-                    // properly named buildDSRetrievalSQL function.
-                    $field->buildDSRetrivalSQL(array($filter_value) , $joins , $where , false);
+                    $field->buildDSRetrievalSQL(array($filter_value) , $joins , $where , false);
                     $filter_value = rawurlencode($filter_value);
                 }
             }
@@ -418,11 +414,11 @@ class contentExtensionImportcsvIndex extends AdministrationPage
          */
 
         // Show the content:
-        $total = $em->fetchCount($sectionID,$where,$joins);
+        $total = EntryManager::fetchCount($sectionID,$where,$joins);
         for($offset = 0; $offset < $total; $offset += 100)
 
         {
-            $entries = $em->fetch(null, $sectionID, 100, $offset, $where, $joins);
+            $entries = EntryManager::fetch(null, $sectionID, 100, $offset, $where, $joins);
             foreach ($entries as $entry)
             {
                 $line = array();
