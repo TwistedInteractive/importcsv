@@ -62,8 +62,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         // Create the XML for the page:
         $xml = new XMLElement('data');
         $sectionsNode = new XMLElement('sections');
-        $sm = new SectionManager($this);
-        $sections = $sm->fetch();
+        $sections = SectionManager::fetch();
         foreach ($sections as $section)
         {
             $sectionsNode->appendChild(new XMLElement('section', $section->get('name'), array('id' => $section->get('id'))));
@@ -75,13 +74,12 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         {
             $xml->setAttribute('multilanguage', 'yes');
             // Get all the multilanguage fields:
-            $fm = new FieldManager($this);
-            $fields = $fm->fetch(null, null, 'ASC', 'sortorder', 'multilingual');
+            $fields = FieldManager::fetch(null, null, 'ASC', 'sortorder', 'multilingual');
             $multilanguage = new XMLElement('multilanguage');
             foreach($fields as $field)
             {
                 $sectionID = $field->get('parent_section');
-                $section   = $sm->fetch($sectionID);
+                $section   = SectionManager::fetch($sectionID);
                 $id        = $field->get('id');
                 $label     = $section->get('name').' : '.$field->get('label');
                 $multilanguage->appendChild(new XMLElement('field', $label, array('id'=>$id)));
@@ -128,8 +126,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         // Get the fields of this section:
         $fieldsNode = new XMLElement('fields');
-        $sm = new SectionManager($this);
-        $section = $sm->fetch($sectionID);
+        $section = SectionManager::fetch($sectionID);
         $fields = $section->fetchFields();
         foreach ($fields as $field)
         {
@@ -242,25 +239,19 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             $fieldIDs = explode(',', $_POST['field-ids']);
             $entryID = null;
 
-            // Load the fieldmanager:
-            $fm = new FieldManager($this);
-
-            // Load the entrymanager:
-            $em = new EntryManager($this);
-
             // Load the CSV data of the specific rows:
             $csvTitles = $csv->titles;
             $csvData = $csv->data;
             for ($i = $currentRow * 10; $i < ($currentRow + 1) * 10; $i++)
             {
                 // Start by creating a new entry:
-                $entry = new Entry($this);
+                $entry = EntryManager::create();
                 $entry->set('section_id', $sectionID);
-				$entry->set('creation_date', DateTimeObj::get('Y-m-d H:i:s'));
-				$entry->set('creation_date_gmt', DateTimeObj::getGMT('Y-m-d H:i:s'));
-				$entry->set('modification_date', DateTimeObj::get('Y-m-d H:i:s'));
-				$entry->set('modification_date_gmt', DateTimeObj::getGMT('Y-m-d H:i:s'));
-				$entry->set('author_id', Administration::instance()->Author->get('id'));
+                $entry->set('creation_date', DateTimeObj::get('Y-m-d H:i:s'));
+                $entry->set('creation_date_gmt', DateTimeObj::getGMT('Y-m-d H:i:s'));
+                $entry->set('modification_date', DateTimeObj::get('Y-m-d H:i:s'));
+                $entry->set('modification_date_gmt', DateTimeObj::getGMT('Y-m-d H:i:s'));
+                $entry->set('author_id', Administration::instance()->Author->get('id'));
 
                 // Ignore this entry?
                 $ignore = false;
@@ -277,7 +268,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                     // Unique action:
                     if ($uniqueField != 'no') {
                         // Check if there is an entry with this value:
-                        $field = $fm->fetch($fieldIDs[$uniqueField]);
+                        $field = FieldManager::fetch($fieldIDs[$uniqueField]);
                         $type = $field->get('type');
                         if (isset($drivers[$type])) {
                             $drivers[$type]->setField($field);
@@ -293,7 +284,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                             {
                                 case 'update' :
                                     {
-                                    $a = $em->fetch($entryID);
+                                    $a = EntryManager::fetch($entryID);
                                     $entry = $a[0];
                                     $updated[] = $entryID;
                                     break;
@@ -318,7 +309,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                             $fieldID = intval($fieldIDs[$j]);
                             // If $fieldID = 0, then `Don't use` is selected as field. So don't use it! :-P
                             if ($fieldID != 0) {
-                                $field = $fm->fetch($fieldID);
+                                $field = FieldManager::fetch($fieldID);
                                 // Get the corresponding field-type:
                                 $type = $field->get('type');
                                 if (isset($drivers[$type])) {
@@ -461,7 +452,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $csv .= "\r\n";
 
         // Get the data of the field:
-        $data    = Symphony::Database()->fetch('SELECT * FROM `tbl_entries_data_'.$fieldID.'`;');
+        $data = Symphony::Database()->fetch('SELECT * FROM `tbl_entries_data_'.$fieldID.'`;');
 
         // Loop through the data:
         foreach($data as $row)
@@ -476,10 +467,8 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         }
 
         // Output the CSV:
-        $fm = new FieldManager($this);
-        $sm = new SectionManager($this);
-        $field = $fm->fetch($fieldID);
-        $section   = $sm->fetch($field->get('parent_section'));
+        $field = FieldManager::fetch($fieldID);
+        $section = SectionManager::fetch($field->get('parent_section'));
 
         $fileName = 'export-'.strtolower($section->get('handle').'-'.$field->get('element_name')).'.csv';
         header('Content-type: text/csv');
