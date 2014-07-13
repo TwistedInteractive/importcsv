@@ -379,27 +379,33 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $filter = $filter_value = $where = $joins = NULL;
         if (isset($_REQUEST['filter'])) {
 
-            list($field_handle , $filter_value) = explode(':' , $_REQUEST['filter'] , 2);
-
-            $field_names = explode(',' , $field_handle);
-
-            foreach ($field_names as $field_name) {
-
+            foreach ($_REQUEST['filter'] as $field_name => $filter_value) {
                 $filter_value = rawurldecode($filter_value);
 
-                $filter = FieldManager::fetchFieldIDFromElementName($field_name, $section->get('id'));
-                $field = FieldManager::fetch($filter);
+                if($field_name === 'system:creation-date' || $field_name === 'system:modification-date' || $field_name === 'system:date') {
+                    require_once(TOOLKIT . '/fields/field.date.php');
+                    $date_joins = $date_where = '';
+                    $date = new fieldDate();
+                    $date->buildDSRetrievalSQL(array($filter_value), $date_joins, $date_where, false);
 
-                if ($field instanceof Field) {
-                    $field->buildDSRetrievalSQL(array($filter_value) , $joins , $where , false);
-                    $filter_value = rawurlencode($filter_value);
+                    // Replace the date field where with the `creation_date` or `modification_date`.
+                    $date_where = preg_replace('/`t\d+`.date/', ($field_name !== 'system:modification-date') ? '`e`.creation_date_gmt' : '`e`.modification_date_gmt', $date_where);
+                    $where .= $date_where;
                 }
-            }
+                else {
+                    $filter = FieldManager::fetchFieldIDFromElementName($field_name, $section->get('id'));
+                    $field = FieldManager::fetch($filter_value);
 
-            if (!is_null($where)) {
-                $where = str_replace('AND' , 'OR' , $where); // multiple fields need to be OR
-                $where = trim($where);
-                $where = ' AND (' . substr($where , 2 , strlen($where)) . ')'; // replace leading OR with AND
+                    if ($field instanceof Field) {
+                        $field->buildDSRetrievalSQL(array($filter_value) , $joins , $where , false);
+                    }
+
+                    if (!is_null($where)) {
+                        $where = str_replace('AND' , 'OR' , $where); // multiple fields need to be OR
+                        $where = trim($where);
+                        $where = ' AND (' . substr($where , 2 , strlen($where)) . ')'; // replace leading OR with AND
+                    }
+                }
             }
 
         }
@@ -420,6 +426,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                 {
                     $data = $entry->getData($field->get('id'));
                     $type = $field->get('type');
+
                     if (isset($drivers[$type])) {
                         $drivers[$type]->setField($field);
                         $value = $drivers[$type]->export($data, $entry->get('id'));
