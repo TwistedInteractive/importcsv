@@ -1,18 +1,18 @@
 <?php
 
 /*
- * Import Driver for type: status
+ * Import Driver for type: dynamictextgroup
  */
 
-class ImportDriver_status extends ImportDriver_default {
+class ImportDriver_dynamictextgroup extends ImportDriver_default {
 
     /**
      * Constructor
      * @return void
      */
-    public function ImportDriver_status()
+    public function ImportDriver_dynamictextgroup()
     {
-        $this->type = 'status';
+        $this->type = 'dynamictextgroup';
     }
 
     /**
@@ -36,16 +36,29 @@ class ImportDriver_status extends ImportDriver_default {
      */
     public function export($data, $entry_id = null)
     {
-        if($entry_id != null)
+        if(!is_null($entry_id))
         {
-            return Symphony::Database()->fetchVar('status', 0, 'SELECT `status` FROM `tbl_fields_status_statuses` WHERE `field_id` = '.$this->field->get('id').' AND `entry_id` = '.$entry_id.' ORDER BY `date` DESC, `id` DESC;');
+            $row = array();
+
+            // Get all the data matched with the key/val
+            foreach($data as $col => $values) {
+                if(is_array($values)) foreach($values as $key => $val) {
+                    $row[$key][] = $col . ":" . $val;
+                }
+                else {
+                    $row[$col][] = $values;
+                }
+            }
+
+            // Implode the multiple pieces of data
+            foreach($row as &$r) {
+                $r = implode($r, '|');
+            }
+
+            return implode($row, ',');
         }
-        if(isset($data['value']))
-        {
-            return trim($data['value']);
-        } else {
-            return '';
-        }
+
+        return '';
     }
 
 }

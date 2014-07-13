@@ -38,7 +38,7 @@ class ImportDriver_referencelink extends ImportDriver_default
     public function import($value, $entry_id = null)
     {
         // Import reference link:
-        $data = $this->field->processRawFieldData(explode(',', $value), $this->field->__OK__);
+        $data = $this->field->processRawFieldData(explode(',', $value), Field::__OK__);
 
         $related_ids = array('relation_id'=>array());
         $related_field_id = $this->getRelatedField();

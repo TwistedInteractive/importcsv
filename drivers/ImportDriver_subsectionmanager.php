@@ -24,7 +24,7 @@ class ImportDriver_subsectionmanager extends ImportDriver_default
      */
     public function import($value, $entry_id = null)
     {
-        $data = $this->field->processRawFieldData(explode(',', $value), $this->field->__OK__);
+        $data = $this->field->processRawFieldData(explode(',', $value), Field::__OK__);
         return $data;
     }
 
