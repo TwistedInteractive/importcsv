@@ -39,10 +39,14 @@ class ImportDriver_dynamictextgroup extends ImportDriver_default {
         if(!is_null($entry_id))
         {
             $row = array();
+
             // Get all the data matched with the key/val
             foreach($data as $col => $values) {
                 if(is_array($values)) foreach($values as $key => $val) {
                     $row[$key][] = $col . ":" . $val;
+                }
+                else {
+                    $row[$col][] = $values;
                 }
             }
 
