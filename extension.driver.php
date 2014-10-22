@@ -18,7 +18,13 @@ Class extension_importcsv extends Extension
 	}
 	
 	public function fetchNavigation() {
-		if(Administration::instance()->Author->isDeveloper())
+		if (is_callable(array('Symphony', 'Author'))) {
+			$author = Symphony::Author();
+		} else {
+			$author = Administration::instance()->Author;
+		}
+
+		if($author->isDeveloper())
 		{
 			return array(
 				array(
