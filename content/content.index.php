@@ -71,9 +71,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $xml->appendChild($sectionsNode);
 
         // Check if the multilingual-field extension is installed:
-        $em = new ExtensionManager();
-        $status = $em->fetchStatus('multilingual_field');
-        if($status == EXTENSION_ENABLED)
+        if(in_array('multilingual_field', ExtensionManager::listInstalledHandles()))
         {
             $xml->setAttribute('multilanguage', 'yes');
             // Get all the multilanguage fields:
@@ -376,7 +374,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         // Show the headers:
         echo implode(',', $headers) . "\n";
-        
+
          /*
          * Enable filtering!
          * Use the same filtering as with publish indexes (ie: ?filter=[field]:value)
@@ -397,7 +395,8 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 										  WHERE `s`.`id` = `f`.`parent_section`
 										  AND f.`element_name` = '$field_name'
 										  AND `s`.`handle` = '" . $section->get('handle') . "' LIMIT 1");
-                $field =& $em->fieldManager->fetch($filter);
+
+                $field = FieldManager::fetch($filter);
 
                 if ($field instanceof Field) {
                     // For deprecated reasons, call the old, typo'd function name until the switch to the
@@ -417,7 +416,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         /*
          * End
          */
-         
+
         // Show the content:
         $total = $em->fetchCount($sectionID,$where,$joins);
         for($offset = 0; $offset < $total; $offset += 100)
@@ -458,7 +457,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $csv = '"entry_id"';
         foreach($supported_language_codes as $code)
         {
-            $csv .= ',"'.$code.'"';
+            $csv .= ';"'.$code.'"';
         }
         $csv .= "\r\n";
 
@@ -472,7 +471,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             $csv .= '"'.$entryID.'"';
             foreach($supported_language_codes as $code)
             {
-                $csv .= ',"'.str_replace('"', '""', $row['value-'.$code]).'"';
+                $csv .= ';"'.str_replace('"', '""', $row['value-'.$code]).'"';
             }
             $csv .= "\r\n";
         }
