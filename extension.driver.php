@@ -19,7 +19,7 @@ Class extension_importcsv extends Extension
 	}
 	
 	public function fetchNavigation() {
-		if(Administration::instance()->Author->isDeveloper())
+		if(Administration::instance()->Author()->isDeveloper())
 		{
 			return array(
 				array(
