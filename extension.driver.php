@@ -1,5 +1,4 @@
 <?php
-require_once(TOOLKIT.'/class.author.php');
 
 class extension_importcsv extends Extension
 {

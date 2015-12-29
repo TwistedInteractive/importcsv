@@ -1,12 +1,5 @@
 <?php
-require_once(TOOLKIT . '/class.xsltpage.php');
-require_once(TOOLKIT . '/class.administrationpage.php');
-require_once(TOOLKIT . '/class.sectionmanager.php');
-require_once(TOOLKIT . '/class.fieldmanager.php');
-require_once(TOOLKIT . '/class.entrymanager.php');
-require_once(TOOLKIT . '/class.entry.php');
 require_once(EXTENSIONS . '/importcsv/lib/parsecsv-0.3.2/parsecsv.lib.php');
-require_once(CORE . '/class.cacheable.php');
 
 class contentExtensionImportcsvIndex extends AdministrationPage
 {
