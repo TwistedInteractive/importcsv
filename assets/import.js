@@ -47,6 +47,7 @@ function importRows(nr)
     fields['section-id'] = sectionID;
     fields['row'] = currentRow;
     fields['field-ids'] = fieldIDs;
+    fields['xsrf'] = Symphony.Utilities.getXSRF();
     jQuery.ajax({
         url: importURL,
         async: true,
