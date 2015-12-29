@@ -496,7 +496,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         // Get the languages:
         $supported_language_codes = $this->__getLanguages();
 
-        // Itterate throught each row:
+        // Iterate throught each row:
         $count = 0;
         foreach ($csvData as $row) {
             if (isset($row['entry_id'])) {
