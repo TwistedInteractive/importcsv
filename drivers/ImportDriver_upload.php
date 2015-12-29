@@ -6,8 +6,6 @@
 
 class ImportDriver_upload extends ImportDriver_default
 {
-
-
     /**
      * Constructor
      * @return void
@@ -19,8 +17,10 @@ class ImportDriver_upload extends ImportDriver_default
 
     /**
      * Process the data so it can be imported into the entry.
-     * @param  $value   The value to import
-     * @param  $entry_id    If a duplicate is found, an entry ID will be provided.
+     * @param $value
+     *  The value to import
+     * @param $entry_id
+     *  If a duplicate is found, an entry ID will be provided.
      * @return The data returned by the field object
      */
     public function import($value, $entry_id = null)
@@ -39,6 +39,7 @@ class ImportDriver_upload extends ImportDriver_default
                 $fileData['size'] = filesize(DOCROOT . $destination . '/' . $value);
                 $fileData['mimetype'] = mime_content_type(DOCROOT . $destination . '/' . $value);
                 $fileData['meta'] = serialize($this->field->getMetaInfo(DOCROOT . $destination . '/' . $value, $fileData['mimetype']));
+
                 return $fileData;
             } else {
                 // File already exists, don't store:
@@ -46,24 +47,28 @@ class ImportDriver_upload extends ImportDriver_default
             }
         } else {
             // File is stored in the CSV, but does not exists. Save it anyway, for database sake:
-            if(!empty($value))
-            {
+            if (!empty($value)) {
                 $fileData = $this->field->processRawFieldData($value, $this->field->__OK__);
                 $fileData['file'] = trim($filename);
                 $fileData['size'] = filesize(DOCROOT . $destination . '/' . $value);
                 $fileData['mimetype'] = ''; // mime_content_type(DOCROOT . $destination . '/' . $value);
                 $fileData['meta'] = serialize($this->field->getMetaInfo(DOCROOT . $destination . '/' . $value, $fileData['mimetype']));
+
                 return $fileData;
             }
         }
+
         return false;
     }
 
     /**
      * Process the data so it can be exported to a CSV
-     * @param  $data    The data as provided by the entry
-     * @param  $entry_id    The ID of the entry that is exported
-     * @return string   A string representation of the data to import into the CSV file
+     * @param $data
+     *  The data as provided by the entry
+     * @param $entry_id
+     *  The ID of the entry that is exported
+     * @return string
+     *  A string representation of the data to import into the CSV file
      */
     public function export($data, $entry_id = null)
     {
@@ -74,7 +79,7 @@ class ImportDriver_upload extends ImportDriver_default
 
 if (!function_exists('mime_content_type')) {
 
-    function mime_content_type($filename)
+    public function mime_content_type($filename)
     {
 
         $mime_types = array(
@@ -136,16 +141,14 @@ if (!function_exists('mime_content_type')) {
         $ext = strtolower(array_pop(explode('.', $filename)));
         if (array_key_exists($ext, $mime_types)) {
             return $mime_types[$ext];
-        }
-        elseif (function_exists('finfo_open')) {
+        } elseif (function_exists('finfo_open')) {
             $finfo = finfo_open(FILEINFO_MIME);
             $mimetype = finfo_file($finfo, $filename);
             finfo_close($finfo);
+
             return $mimetype;
-        }
-        else {
+        } else {
             return 'application/octet-stream';
         }
     }
 }
-

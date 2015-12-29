@@ -6,7 +6,6 @@
 
 class ImportDriver_selectbox_link extends ImportDriver_default
 {
-
     /**
      * Constructor
      * @return void
@@ -31,8 +30,10 @@ class ImportDriver_selectbox_link extends ImportDriver_default
 
     /**
      * Process the data so it can be imported into the entry.
-     * @param  $value   The value to import
-     * @param  $entry_id    If a duplicate is found, an entry ID will be provided.
+     * @param $value
+     *  The value to import
+     * @param $entry_id
+     *  If a duplicate is found, an entry ID will be provided.
      * @return The data returned by the field object
      */
     public function import($value, $entry_id = null)
@@ -41,8 +42,7 @@ class ImportDriver_selectbox_link extends ImportDriver_default
         $related_field_id = $this->getRelatedField();
         $data = explode(',', $value);
         $related_ids = array('relation_id'=>array());
-        foreach ($data as $relationValue)
-        {
+        foreach ($data as $relationValue) {
             $related_ids['relation_id'][] = Symphony::Database()->fetchVar('entry_id', 0, sprintf('
                 SELECT `entry_id`
                 FROM `tbl_entries_data_%d`
@@ -52,14 +52,18 @@ class ImportDriver_selectbox_link extends ImportDriver_default
                 Symphony::Database()->cleanValue(trim($relationValue))
             ));
         }
+
         return $related_ids;
     }
 
     /**
      * Process the data so it can be exported to a CSV
-     * @param  $data    The data as provided by the entry
-     * @param  $entry_id    The ID of the entry that is exported
-     * @return string   A string representation of the data to import into the CSV file
+     * @param $data
+     *  The data as provided by the entry
+     * @param $entry_id
+     *  The ID of the entry that is exported
+     * @return string
+     *  A string representation of the data to import into the CSV file
      */
     public function export($data, $entry_id = null)
     {
@@ -69,10 +73,8 @@ class ImportDriver_selectbox_link extends ImportDriver_default
 
         $related_values = array();
         $related_field_id = $this->getRelatedField();
-        foreach ($data['relation_id'] as $relation_id)
-        {
-            if(!empty($relation_id))
-            {
+        foreach ($data['relation_id'] as $relation_id) {
+            if (!empty($relation_id)) {
                 $row = Symphony::Database()->fetchRow(0, 'SELECT * FROM `tbl_entries_data_' . $related_field_id . '` WHERE `entry_id` = ' . $relation_id . ';');
                 if (isset($row['value'])) {
                     $related_values[] = trim($row['value']);
@@ -82,13 +84,16 @@ class ImportDriver_selectbox_link extends ImportDriver_default
                 }
             }
         }
+
         return implode(', ', $related_values);
     }
 
     /**
      * Scan the database for a specific value
-     * @param  $value       The value to scan for
-     * @return null|string  The ID of the entry found, or null if no match is found.
+     * @param $value
+     *  The value to scan for
+     * @return null|string
+     *  The ID of the entry found, or null if no match is found.
      */
     public function scanDatabase($value)
     {
@@ -116,14 +121,11 @@ class ImportDriver_selectbox_link extends ImportDriver_default
 
             if ($existing != false) {
                 return $existing;
-            }
-            else {
+            } else {
                 return null;
             }
-        }
-        else {
+        } else {
             return null;
         }
     }
-
 }

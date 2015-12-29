@@ -10,14 +10,13 @@ require_once(CORE . '/class.cacheable.php');
 
 class contentExtensionImportcsvIndex extends AdministrationPage
 {
-
-/*    public function __construct(&$parent)
+/*
+    public function __construct(&$parent)
     {
         parent::__construct($parent);
 
     }
 */
-
 
     public function build()
     {
@@ -28,7 +27,6 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $this->setTitle('Symphony - Import / export CSV');
         $this->Context->appendChild(new XMLElement('h2', __('Import / Export CSV')));
     }
-
 
     public function view()
     {
@@ -56,7 +54,6 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         }
     }
 
-
     private function __indexPage()
     {
         // Create the XML for the page:
@@ -64,22 +61,19 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $sectionsNode = new XMLElement('sections');
         $sm = new SectionManager($this);
         $sections = $sm->fetch();
-        foreach ($sections as $section)
-        {
+        foreach ($sections as $section) {
             $sectionsNode->appendChild(new XMLElement('section', $section->get('name'), array('id' => $section->get('id'))));
         }
         $xml->appendChild($sectionsNode);
 
         // Check if the multilingual-field extension is installed:
-        if(in_array('multilingual_field', ExtensionManager::listInstalledHandles()))
-        {
+        if (in_array('multilingual_field', ExtensionManager::listInstalledHandles())) {
             $xml->setAttribute('multilanguage', 'yes');
             // Get all the multilanguage fields:
             $fm = new FieldManager($this);
             $fields = $fm->fetch(null, null, 'ASC', 'sortorder', 'multilingual');
             $multilanguage = new XMLElement('multilanguage');
-            foreach($fields as $field)
-            {
+            foreach ($fields as $field) {
                 $sectionID = $field->get('parent_section');
                 $section   = $sm->fetch($sectionID);
                 $id        = $field->get('id');
@@ -99,7 +93,8 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
     /**
      * Get the CSV object as it is stored in the database.
-     * @return bool|mixed   the CSV object on success, false on failure
+     * @return bool|mixed
+     *  The CSV object on success, false on failure
      */
     private function __getCSV()
     {
@@ -131,15 +126,13 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $sm = new SectionManager($this);
         $section = $sm->fetch($sectionID);
         $fields = $section->fetchFields();
-        foreach ($fields as $field)
-        {
+        foreach ($fields as $field) {
             $fieldsNode->appendChild(new XMLElement('field', $field->get('label'), array('id' => $field->get('id'))));
         }
         $xml->appendChild($fieldsNode);
 
         $csvNode = new XMLElement('csv');
-        foreach ($csv->titles as $key)
-        {
+        foreach ($csv->titles as $key) {
             $csvNode->appendChild(new XMLElement('key', $key));
         }
         $xml->appendChild($csvNode);
@@ -150,7 +143,6 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $xslt->setXSL(EXTENSIONS . '/importcsv/content/step2.xsl', true);
         $this->Form->setValue($xslt->generate());
     }
-
 
     private function __addVar($name, $value)
     {
@@ -184,8 +176,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         // Store the associated Field-ID's:
         $i = 0;
         $ids = array();
-        foreach ($csvTitles as $title)
-        {
+        foreach ($csvTitles as $title) {
             $ids[] = $_POST['field-' . $i];
             $i++;
         }
@@ -201,13 +192,11 @@ class contentExtensionImportcsvIndex extends AdministrationPage
     {
         $classes = glob(EXTENSIONS . '/importcsv/drivers/*.php');
         $drivers = array();
-        foreach ($classes as $class)
-        {
+        foreach ($classes as $class) {
             include_once($class);
             $a = explode('_', str_replace('.php', '', basename($class)));
             $driverName = '';
-            for ($i = 1; $i < count($a); $i++)
-            {
+            for ($i = 1; $i < count($a); $i++) {
                 if ($i > 1) {
                     $driverName .= '_';
                 }
@@ -216,6 +205,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             $className = 'ImportDriver_' . $driverName;
             $drivers[$driverName] = new $className;
         }
+
         return $drivers;
     }
 
@@ -251,8 +241,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
             // Load the CSV data of the specific rows:
             $csvTitles = $csv->titles;
             $csvData = $csv->data;
-            for ($i = $currentRow * 10; $i < ($currentRow + 1) * 10; $i++)
-            {
+            for ($i = $currentRow * 10; $i < ($currentRow + 1) * 10; $i++) {
                 // Start by creating a new entry:
                 $entry = new Entry($this);
                 $entry->set('section_id', $sectionID);
@@ -284,8 +273,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
                         if ($entryID != false) {
                             // Update? Ignore? Add new?
-                            switch ($uniqueAction)
-                            {
+                            switch ($uniqueAction) {
                                 case 'update' :
                                     {
                                     $a = $em->fetch($entryID);
@@ -306,8 +294,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                     if (!$ignore) {
                         // Do the actual importing:
                         $j = 0;
-                        foreach ($row as $value)
-                        {
+                        foreach ($row as $value) {
                             // When no unique field is found, treat it like a new entry
                             // Otherwise, stop processing to safe CPU power.
                             $fieldID = intval($fieldIDs[$j]);
@@ -364,8 +351,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $fields = $section->fetchFields();
 
         $headers = array();
-        foreach ($fields as $field)
-        {
+        foreach ($fields as $field) {
             $headers[] = '"' . str_replace('"', '""', $field->get('label')) . '"';
         }
 
@@ -391,10 +377,10 @@ class contentExtensionImportcsvIndex extends AdministrationPage
                 $filter_value = rawurldecode($filter_value);
 
                 $filter = Symphony::Database()->fetchVar('id' , 0 , "SELECT `f`.`id`
-										  FROM `tbl_fields` AS `f`, `tbl_sections` AS `s`
-										  WHERE `s`.`id` = `f`.`parent_section`
-										  AND f.`element_name` = '$field_name'
-										  AND `s`.`handle` = '" . $section->get('handle') . "' LIMIT 1");
+                                          FROM `tbl_fields` AS `f`, `tbl_sections` AS `s`
+                                          WHERE `s`.`id` = `f`.`parent_section`
+                                          AND f.`element_name` = '$field_name'
+                                          AND `s`.`handle` = '" . $section->get('handle') . "' LIMIT 1");
 
                 $field = FieldManager::fetch($filter);
 
@@ -423,11 +409,9 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         {
             $entries = $em->fetch(null, $sectionID, 100, $offset, $where, $joins);
-            foreach ($entries as $entry)
-            {
+            foreach ($entries as $entry) {
                 $line = array();
-                foreach ($fields as $field)
-                {
+                foreach ($fields as $field) {
                     $data = $entry->getData($field->get('id'));
                     $type = $field->get('type');
                     if (isset($drivers[$type])) {
@@ -455,8 +439,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         // Create the CSV Headers:
         $csv = '"entry_id"';
-        foreach($supported_language_codes as $code)
-        {
+        foreach ($supported_language_codes as $code) {
             $csv .= ';"'.$code.'"';
         }
         $csv .= "\r\n";
@@ -465,12 +448,10 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $data    = Symphony::Database()->fetch('SELECT * FROM `tbl_entries_data_'.$fieldID.'`;');
 
         // Loop through the data:
-        foreach($data as $row)
-        {
+        foreach ($data as $row) {
             $entryID = $row['entry_id'];
             $csv .= '"'.$entryID.'"';
-            foreach($supported_language_codes as $code)
-            {
+            foreach ($supported_language_codes as $code) {
                 $csv .= ';"'.str_replace('"', '""', $row['value-'.$code]).'"';
             }
             $csv .= "\r\n";
@@ -496,6 +477,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $supported_language_codes = explode(',', General::sanitize(Symphony::Configuration()->get('language_codes', 'language_redirect')));
         $supported_language_codes = array_map('trim', $supported_language_codes);
         $supported_language_codes = array_filter($supported_language_codes);
+
         return $supported_language_codes;
     }
 
@@ -516,21 +498,16 @@ class contentExtensionImportcsvIndex extends AdministrationPage
 
         // Itterate throught each row:
         $count = 0;
-        foreach($csvData as $row)
-        {
-            if(isset($row['entry_id']))
-            {
+        foreach ($csvData as $row) {
+            if (isset($row['entry_id'])) {
                 $data = array();
                 $first = true;
                 // Itterate according to the languages that are available, not the ones that are defined in the CSV:
-                foreach($supported_language_codes as $code)
-                {
+                foreach ($supported_language_codes as $code) {
                     // Check if this language code exists in the CSV data:
-                    if(isset($row[$code]))
-                    {
+                    if (isset($row[$code])) {
                         // The first language in the CSV data is used as the default language:
-                        if($first)
-                        {
+                        if ($first) {
                             $data['handle'] = General::createHandle($row[$code]);
                             $data['value']  = General::sanitize($row[$code]);
                         }
@@ -554,6 +531,4 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $p->appendChild(new XMLElement('a', __('Import another field'), array('href'=>'?#multi')));
         $this->Form->appendChild($p);
     }
-
 }
-

@@ -3,14 +3,14 @@
 	<name>Import/Export CSV</name>
 	<description>Import a CSV file to create new entries for a certain section, or export an existing section to a CSV file.</description>
 	<repo type="github">https://github.com/TwistedInteractive/importcsv</repo>
-    <types>
-        <type>Workflow</type>
-        <type>Other</type>
-    </types>
+	<types>
+		<type>Workflow</type>
+		<type>Other</type>
+	</types>
 	<authors>
 	</authors>
 	<releases>
-        <release version="0.3" date="2011-12-15" min="2.3"/>
+		<release version="0.3" date="2011-12-15" min="2.3"/>
 		<release version="0.2.3" date="2011-08-31" min="2.2.x"/>
 	</releases>
 </extension>
