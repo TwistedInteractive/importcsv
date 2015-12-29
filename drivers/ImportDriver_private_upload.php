@@ -82,9 +82,8 @@ class ImportDriver_private_upload extends ImportDriver_default
 
 if (!function_exists('mime_content_type')) {
 
-    public function mime_content_type($filename)
+    function mime_content_type($filename)
     {
-
         $mime_types = array(
 
             'txt' => 'text/plain',
