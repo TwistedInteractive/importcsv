@@ -360,7 +360,7 @@ class contentExtensionImportcsvIndex extends AdministrationPage
         $sm = new SectionManager($this);
         $em = new EntryManager($this);
         $section = $sm->fetch($sectionID);
-        $fileName = $section->get('handle') . '_' . date('Y-m-d') . '.csv';
+        $fileName = 'export_' . date('Y-m-d') . '.csv';
         $fields = $section->fetchFields();
 
         $headers = array();
