@@ -31,7 +31,7 @@ Class extension_importcsv extends Extension
 		}
 	}
 
-    public function update()
+    public function update($previousVersion = false)
     {
         if(file_exists(TMP.'/importcsv.csv'))
         {
